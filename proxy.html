@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Proxy | Турция, США, Канада</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #0f3460 50%, #1a1a2e 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .glass-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(120, 119, 216, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 40%, rgba(255, 119, 119, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 50% 80%, rgba(120, 216, 119, 0.1) 0%, transparent 20%);
+            background-size: 200% 200%;
+            animation: float 30s infinite linear;
+        }
+
+        @keyframes float {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 100% 100%; }
+            100% { background-position: 0% 0%; }
+        }
+
+        .stars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(2px 2px at 20px 30px, #eee, transparent),
+                radial-gradient(2px 2px at 40px 70px, #fff, transparent),
+                radial-gradient(1px 1px at 90px 40px, #ddd, transparent),
+                radial-gradient(1px 1px at 130px 80px, #fff, transparent),
+                radial-gradient(2px 2px at 160px 30px, #eee, transparent);
+            background-repeat: repeat;
+            background-size: 200px 100px;
+            animation: twinkle 4s ease-in-out infinite alternate;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.2; }
+            100% { opacity: 0.8; }
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            padding: 40px;
+            width: 100%;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 16px;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-weight: bold;
+            color: white;
+            font-size: 32px;
+        }
+
+        .title {
+            font-size: 3rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(90deg, #3b82f6, #10b981, #ef4444);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 300;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .content {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .countries-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 20px;
+        }
+
+        .country-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .country-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .country-card.selected {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.5);
+        }
+
+        .country-flag {
+            width: 80px;
+            height: 50px;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .country-flag img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .country-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 8px;
+        }
+
+        .country-description {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .country-features {
+            list-style: none;
+            margin-bottom: 20px;
+        }
+
+        .country-features li {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .country-features li:before {
+            content: "✓";
+            color: #10b981;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .country-price {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 16px;
+        }
+
+        .country-price span {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 400;
+        }
+
+        .select-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .select-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .select-btn.selected {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .pricing-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .pricing-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .pricing-option {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .pricing-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .pricing-option.selected {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.5);
+        }
+
+        .pricing-duration {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 8px;
+        }
+
+        .pricing-price {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 8px;
+        }
+
+        .pricing-savings {
+            font-size: 0.8rem;
+            color: #10b981;
+            margin-bottom: 12px;
+        }
+
+        .order-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .order-summary {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .order-total {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: white;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: white;
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .form-input:focus {
+            border-color: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn {
+            padding: 14px 24px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            outline: none;
+            width: 100%;
+            font-size: 1.1rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .features-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .feature {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(59, 130, 246, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #3b82f6;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .feature-content h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 4px;
+        }
+
+        .feature-content p {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-text {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .glass-card {
+                padding: 30px 20px;
+            }
+            
+            .title {
+                font-size: 2.2rem;
+            }
+            
+            .countries-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .pricing-options {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background">
+        <div class="glass-layer"></div>
+        <div class="particles"></div>
+        <div class="stars"></div>
+    </div>
+
+    <div class="container">
+        <div class="glass-card">
+            <div class="header">
+                <div class="logo">🌐</div>
+                <h1 class="title">Premium Proxy</h1>
+                <p class="subtitle">Высокоскоростные прокси-серверы из Турции, США и Канады для безопасного и анонимного интернета</p>
+            </div>
+
+            <div class="content">
+                <div class="countries-section">
+                    <div class="country-card" data-country="turkey">
+                        <div class="country-flag">
+                            <img src="https://flagcdn.com/w320/tr.png" alt="Флаг Турции">
+                        </div>
+                        <h3 class="country-name">Турция</h3>
+                        <p class="country-description">Турецкие прокси для доступа к локальному контенту и обхода географических ограничений.</p>
+                        <ul class="country-features">
+                            <li>Высокая скорость соединения</li>
+                            <li>Доступ к турецким сайтам</li>
+                            <li>Полная анонимность</li>
+                            <li>Поддержка 24/7</li>
+                        </ul>
+                        <div class="country-price">$4.99 <span>/месяц</span></div>
+                        <button class="select-btn">Выбрать</button>
+                    </div>
+
+                    <div class="country-card" data-country="usa">
+                        <div class="country-flag">
+                            <img src="https://flagcdn.com/w320/us.png" alt="Флаг США">
+                        </div>
+                        <h3 class="country-name">США</h3>
+                        <p class="country-description">Американские прокси для доступа к международным сервисам и потокового видео.</p>
+                        <ul class="country-features">
+                            <li>Сверхбыстрая скорость</li>
+                            <li>Доступ к Netflix, Hulu</li>
+                            <li>Неограниченный трафик</li>
+                            <li>Множество локаций</li>
+                        </ul>
+                        <div class="country-price">$6.99 <span>/месяц</span></div>
+                        <button class="select-btn">Выбрать</button>
+                    </div>
+
+                    <div class="country-card" data-country="canada">
+                        <div class="country-flag">
+                            <img src="https://flagcdn.com/w320/ca.png" alt="Флаг Канады">
+                        </div>
+                        <h3 class="country-name">Канада</h3>
+                        <p class="country-description">Канадские прокси с высокой стабильностью для бизнеса и личного использования.</p>
+                        <ul class="country-features">
+                            <li>Стабильное соединение</li>
+                            <li>Низкая задержка</li>
+                            <li>Защита данных</li>
+                            <li>Техническая поддержка</li>
+                        </ul>
+                        <div class="country-price">$5.99 <span>/месяц</span></div>
+                        <button class="select-btn">Выбрать</button>
+                    </div>
+                </div>
+
+                <div class="pricing-section">
+                    <h2 class="section-title">Выберите период подписки</h2>
+                    <div class="pricing-options">
+                        <div class="pricing-option" data-duration="1" data-price="4.99">
+                            <div class="pricing-duration">1 месяц</div>
+                            <div class="pricing-price">$4.99</div>
+                            <div class="pricing-savings">Без скидки</div>
+                        </div>
+                        <div class="pricing-option" data-duration="3" data-price="12.99">
+                            <div class="pricing-duration">3 месяца</div>
+                            <div class="pricing-price">$12.99</div>
+                            <div class="pricing-savings">Экономия 13%</div>
+                        </div>
+                        <div class="pricing-option" data-duration="6" data-price="22.99">
+                            <div class="pricing-duration">6 месяцев</div>
+                            <div class="pricing-price">$22.99</div>
+                            <div class="pricing-savings">Экономия 23%</div>
+                        </div>
+                        <div class="pricing-option" data-duration="12" data-price="39.99">
+                            <div class="pricing-duration">12 месяцев</div>
+                            <div class="pricing-price">$39.99</div>
+                            <div class="pricing-savings">Экономия 33%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="order-section">
+                    <h2 class="section-title">Оформление заказа</h2>
+                    <div class="order-summary">
+                        <div class="order-item">
+                            <span>Прокси:</span>
+                            <span id="selected-country">Не выбрано</span>
+                        </div>
+                        <div class="order-item">
+                            <span>Период:</span>
+                            <span id="selected-duration">Не выбрано</span>
+                        </div>
+                        <div class="order-item">
+                            <span>Цена:</span>
+                            <span id="selected-price">$0.00</span>
+                        </div>
+                        <div class="order-total">
+                            <span>Итого:</span>
+                            <span id="total-price">$0.00</span>
+                        </div>
+                    </div>
+
+                    <form id="order-form">
+                        <div class="form-group">
+                            <label class="form-label" for="email">Email</label>
+                            <input type="email" class="form-input" id="email" placeholder="Ваш email" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="payment">Способ оплаты</label>
+                            <select class="form-input" id="payment" required>
+                                <option value="">Выберите способ оплаты</option>
+                                <option value="card">Банковская карта</option>
+                                <option value="paypal">PayPal</option>
+                                <option value="crypto">Криптовалюта</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn" id="order-btn">Оформить заказ</button>
+                    </form>
+                </div>
+
+                <div class="features-section">
+                    <h2 class="section-title">Почему выбирают наши прокси?</h2>
+                    <div class="features-grid">
+                        <div class="feature">
+                            <div class="feature-icon">⚡</div>
+                            <div class="feature-content">
+                                <h3>Высокая скорость</h3>
+                                <p>Наши прокси обеспечивают максимальную скорость соединения без ограничений.</p>
+                            </div>
+                        </div>
+                        <div class="feature">
+                            <div class="feature-icon">🔒</div>
+                            <div class="feature-content">
+                                <h3>Безопасность</h3>
+                                <p>Полная анонимность и защита ваших данных с использованием современных технологий.</p>
+                            </div>
+                        </div>
+                        <div class="feature">
+                            <div class="feature-icon">🌍</div>
+                            <div class="feature-content">
+                                <h3>Доступ к контенту</h3>
+                                <p>Обходите географические ограничения и получайте доступ к любому контенту.</p>
+                            </div>
+                        </div>
+                        <div class="feature">
+                            <div class="feature-icon">📞</div>
+                            <div class="feature-content">
+                                <h3>Поддержка 24/7</h3>
+                                <p>Наша команда поддержки всегда готова помочь вам с любыми вопросами.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="footer">
+                    <p class="footer-text">© 2023 Premium Proxy. Все права защищены.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ProxyStore {
+            constructor() {
+                this.selectedCountry = null;
+                this.selectedDuration = null;
+                this.selectedPrice = 0;
+                
+                this.init();
+            }
+
+            init() {
+                // Инициализация элементов
+                this.countryCards = document.querySelectorAll('.country-card');
+                this.pricingOptions = document.querySelectorAll('.pricing-option');
+                this.orderForm = document.getElementById('order-form');
+                
+                // Элементы для отображения выбора
+                this.selectedCountryEl = document.getElementById('selected-country');
+                this.selectedDurationEl = document.getElementById('selected-duration');
+                this.selectedPriceEl = document.getElementById('selected-price');
+                this.totalPriceEl = document.getElementById('total-price');
+                
+                // Назначаем обработчики событий
+                this.setupEventListeners();
+            }
+
+            setupEventListeners() {
+                // Выбор страны
+                this.countryCards.forEach(card => {
+                    card.addEventListener('click', () => {
+                        this.selectCountry(card);
+                    });
+                });
+
+                // Выбор периода
+                this.pricingOptions.forEach(option => {
+                    option.addEventListener('click', () => {
+                        this.selectPricing(option);
+                    });
+                });
+
+                // Оформление заказа
+                this.orderForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.processOrder();
+                });
+            }
+
+            selectCountry(card) {
+                // Снимаем выделение со всех карточек
+                this.countryCards.forEach(c => {
+                    c.classList.remove('selected');
+                    c.querySelector('.select-btn').classList.remove('selected');
+                    c.querySelector('.select-btn').textContent = 'Выбрать';
+                });
+
+                // Выделяем выбранную карточку
+                card.classList.add('selected');
+                const button = card.querySelector('.select-btn');
+                button.classList.add('selected');
+                button.textContent = '✓ Выбрано';
+
+                // Сохраняем выбранную страну
+                this.selectedCountry = card.getAttribute('data-country');
+                const countryName = card.querySelector('.country-name').textContent;
+                this.selectedCountryEl.textContent = countryName;
+
+                // Обновляем цену
+                this.updatePrice();
+            }
+
+            selectPricing(option) {
+                // Снимаем выделение со всех вариантов
+                this.pricingOptions.forEach(o => {
+                    o.classList.remove('selected');
+                });
+
+                // Выделяем выбранный вариант
+                option.classList.add('selected');
+
+                // Сохраняем выбранный период и цену
+                this.selectedDuration = option.getAttribute('data-duration');
+                this.selectedPrice = parseFloat(option.getAttribute('data-price'));
+                
+                const durationText = option.querySelector('.pricing-duration').textContent;
+                this.selectedDurationEl.textContent = durationText;
+                this.selectedPriceEl.textContent = `$${this.selectedPrice.toFixed(2)}`;
+
+                // Обновляем общую цену
+                this.updatePrice();
+            }
+
+            updatePrice() {
+                if (this.selectedCountry && this.selectedDuration) {
+                    // Здесь можно добавить логику расчета цены в зависимости от страны
+                    let basePrice = this.selectedPrice;
+                    
+                    // Пример: разные цены для разных стран
+                    if (this.selectedCountry === 'usa') {
+                        basePrice += 2.00;
+                    } else if (this.selectedCountry === 'canada') {
+                        basePrice += 1.00;
+                    }
+                    
+                    this.totalPriceEl.textContent = `$${basePrice.toFixed(2)}`;
+                } else {
+                    this.totalPriceEl.textContent = '$0.00';
+                }
+            }
+
+            processOrder() {
+                if (!this.selectedCountry || !this.selectedDuration) {
+                    alert('Пожалуйста, выберите страну и период подписки перед оформлением заказа.');
+                    return;
+                }
+
+                const email = document.getElementById('email').value;
+                const payment = document.getElementById('payment').value;
+
+                // Здесь обычно будет отправка данных на сервер
+                // Для демонстрации просто показываем сообщение
+                alert(`Заказ успешно оформлен!\n\nСтрана: ${this.selectedCountryEl.textContent}\nПериод: ${this.selectedDurationEl.textContent}\nСумма: ${this.totalPriceEl.textContent}\nEmail: ${email}\nСпособ оплаты: ${payment}`);
+                
+                // Сброс формы
+                this.orderForm.reset();
+                
+                // Сброс выбора
+                this.countryCards.forEach(c => {
+                    c.classList.remove('selected');
+                    c.querySelector('.select-btn').classList.remove('selected');
+                    c.querySelector('.select-btn').textContent = 'Выбрать';
+                });
+                
+                this.pricingOptions.forEach(o => {
+                    o.classList.remove('selected');
+                });
+                
+                this.selectedCountry = null;
+                this.selectedDuration = null;
+                this.selectedPrice = 0;
+                this.selectedCountryEl.textContent = 'Не выбрано';
+                this.selectedDurationEl.textContent = 'Не выбрано';
+                this.selectedPriceEl.textContent = '$0.00';
+                this.totalPriceEl.textContent = '$0.00';
+            }
+        }
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            const store = new ProxyStore();
+        });
+    </script>
+</body>
+</html>
