@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VoiceChat | P2P голосовой чат</title>
+    <title>VoiceChat | WebRTC голосовой чат</title>
     <style>
         * {
             margin: 0;
@@ -309,6 +309,10 @@
             background: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
         }
+
+        .audio-element {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -318,15 +322,15 @@
         <!-- Главный экран -->
         <div class="glass-card" id="main-screen">
             <div class="logo">VoiceChat</div>
-            <div class="tagline">P2P голосовой чат с реальными людьми</div>
+            <div class="tagline">WebRTC голосовой чат с реальными людьми</div>
             
             <button class="btn btn-primary" id="create-room">Создать комнату</button>
             <button class="btn btn-secondary" id="join-room">Присоединиться к комнате</button>
             
             <div class="features">
-                <div class="feature">🔒 Без сервера</div>
+                <div class="feature">🔒 P2P соединение</div>
                 <div class="feature">🎤 Реальное общение</div>
-                <div class="feature">🚀 Мгновенное подключение</div>
+                <div class="feature">🚀 WebRTC технология</div>
             </div>
         </div>
 
@@ -433,21 +437,34 @@
         </div>
     </div>
 
+    <!-- Аудио элементы для воспроизведения удаленного звука -->
+    <audio id="remote-audio" class="audio-element" autoplay></audio>
+
     <script>
-        class VoiceChat {
+        class WebRTCVoiceChat {
             constructor() {
                 this.peerConnection = null;
                 this.localStream = null;
                 this.dataChannel = null;
                 this.isHost = false;
                 this.roomId = null;
+                this.userName = null;
                 this.participants = new Map();
                 this.callTime = 0;
                 this.callInterval = null;
                 this.isMicMuted = false;
+                
+                // WebRTC configuration
+                this.rtcConfig = {
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' }
+                    ]
+                };
 
                 this.initializeElements();
                 this.setupEventListeners();
+                this.setupSignalingSimulation();
             }
 
             initializeElements() {
@@ -485,6 +502,7 @@
                 this.hostParticipant = document.getElementById('host-participant');
                 this.notification = document.getElementById('notification');
                 this.connectionStatus = document.getElementById('connection-status');
+                this.remoteAudio = document.getElementById('remote-audio');
             }
 
             setupEventListeners() {
@@ -504,6 +522,13 @@
 
                 // Управление голосом
                 this.micToggleBtn.addEventListener('click', () => this.toggleMicrophone());
+            }
+
+            // Имитация signaling сервера через localStorage
+            setupSignalingSimulation() {
+                setInterval(() => {
+                    this.checkForSignals();
+                }, 1000);
             }
 
             showScreen(screenName) {
@@ -542,10 +567,8 @@
                 this.showScreen('waiting');
                 this.showNotification('Комната создана! Поделитесь ID с друзьями');
 
-                // Имитируем ожидание подключения
-                setTimeout(() => {
-                    this.showNotification('Для тестирования: откройте эту страницу в другом окне браузера и присоединитесь с ID: ' + this.roomId, 6000);
-                }, 1000);
+                // Инициализируем WebRTC как хост
+                await this.initializeWebRTC(true);
             }
 
             async joinRoom() {
@@ -570,13 +593,149 @@
                 this.startCallTimer();
                 this.animateVoiceVisualizer();
 
-                // Имитируем подключение
-                setTimeout(() => {
-                    this.connectionStatus.textContent = 'Подключено (тестовый режим)';
-                    this.showNotification('Вы в голосовом чате! Для реального общения нужен WebRTC сервер');
-                }, 2000);
+                // Инициализируем WebRTC как гость
+                await this.initializeWebRTC(false);
 
-                this.addParticipant(this.userName, false);
+                // Отправляем сигнал о присоединении
+                this.sendSignal({
+                    type: 'join',
+                    roomId: this.roomId,
+                    userName: this.userName
+                });
+            }
+
+            async initializeWebRTC(isOfferer) {
+                try {
+                    // Получаем доступ к микрофону
+                    this.localStream = await navigator.mediaDevices.getUserMedia({
+                        audio: {
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: true
+                        },
+                        video: false
+                    });
+
+                    // Создаем Peer Connection
+                    this.peerConnection = new RTCPeerConnection(this.rtcConfig);
+
+                    // Добавляем локальные треки
+                    this.localStream.getTracks().forEach(track => {
+                        this.peerConnection.addTrack(track, this.localStream);
+                    });
+
+                    // Обработка входящих треков
+                    this.peerConnection.ontrack = (event) => {
+                        const [remoteStream] = event.streams;
+                        this.remoteAudio.srcObject = remoteStream;
+                        this.showNotification('Соединение установлено! Говорите сейчас');
+                        this.connectionStatus.textContent = 'Соединение установлено';
+                    };
+
+                    // Обработка ICE кандидатов
+                    this.peerConnection.onicecandidate = (event) => {
+                        if (event.candidate) {
+                            this.sendSignal({
+                                type: 'ice-candidate',
+                                candidate: event.candidate,
+                                roomId: this.roomId
+                            });
+                        }
+                    };
+
+                    // Создаем offer если мы инициатор
+                    if (isOfferer) {
+                        const offer = await this.peerConnection.createOffer();
+                        await this.peerConnection.setLocalDescription(offer);
+                        
+                        this.sendSignal({
+                            type: 'offer',
+                            offer: offer,
+                            roomId: this.roomId,
+                            userName: this.userName
+                        });
+                    }
+
+                } catch (error) {
+                    console.error('Error initializing WebRTC:', error);
+                    this.showNotification('Ошибка доступа к микрофону');
+                }
+            }
+
+            async handleSignalingMessage(message) {
+                try {
+                    if (!this.peerConnection) return;
+
+                    switch (message.type) {
+                        case 'offer':
+                            await this.peerConnection.setRemoteDescription(message.offer);
+                            const answer = await this.peerConnection.createAnswer();
+                            await this.peerConnection.setLocalDescription(answer);
+                            
+                            this.sendSignal({
+                                type: 'answer',
+                                answer: answer,
+                                roomId: this.roomId,
+                                userName: this.userName
+                            });
+                            break;
+
+                        case 'answer':
+                            await this.peerConnection.setRemoteDescription(message.answer);
+                            break;
+
+                        case 'ice-candidate':
+                            await this.peerConnection.addIceCandidate(message.candidate);
+                            break;
+
+                        case 'join':
+                            if (this.isHost) {
+                                this.showScreen('voice');
+                                this.startCallTimer();
+                                this.animateVoiceVisualizer();
+                                this.addParticipant(message.userName, false);
+                                this.showNotification(`${message.userName} присоединился к чату`);
+                            }
+                            break;
+                    }
+                } catch (error) {
+                    console.error('Error handling signaling message:', error);
+                }
+            }
+
+            // Имитация signaling сервера через localStorage
+            sendSignal(message) {
+                const signals = JSON.parse(localStorage.getItem('webrtc_signals') || '{}');
+                signals[this.roomId] = signals[this.roomId] || [];
+                signals[this.roomId].push({
+                    ...message,
+                    timestamp: Date.now(),
+                    sender: this.userName
+                });
+                localStorage.setItem('webrtc_signals', JSON.stringify(signals));
+            }
+
+            checkForSignals() {
+                if (!this.roomId) return;
+
+                const signals = JSON.parse(localStorage.getItem('webrtc_signals') || '{}');
+                const roomSignals = signals[this.roomId] || [];
+
+                roomSignals.forEach((signal, index) => {
+                    // Пропускаем собственные сигналы
+                    if (signal.sender !== this.userName) {
+                        this.handleSignalingMessage(signal);
+                    }
+                });
+
+                // Очищаем обработанные сигналы
+                if (roomSignals.length > 0) {
+                    signals[this.roomId] = roomSignals.filter(signal => 
+                        signal.sender === this.userName || 
+                        Date.now() - signal.timestamp < 30000
+                    );
+                    localStorage.setItem('webrtc_signals', JSON.stringify(signals));
+                }
             }
 
             copyRoomId() {
@@ -604,6 +763,7 @@
                 participantElement.innerHTML = `
                     <div class="participant-avatar">👤</div>
                     <div>${name} ${isLocal ? '(Вы)' : ''}</div>
+                    ${!isLocal ? '<div class="user-status">🎤</div>' : ''}
                 `;
 
                 this.participantsList.appendChild(participantElement);
@@ -618,6 +778,15 @@
                     this.localStream.getTracks().forEach(track => track.stop());
                 }
 
+                if (this.peerConnection) {
+                    this.peerConnection.close();
+                }
+
+                // Очищаем сигналы
+                const signals = JSON.parse(localStorage.getItem('webrtc_signals') || '{}');
+                delete signals[this.roomId];
+                localStorage.setItem('webrtc_signals', JSON.stringify(signals));
+
                 this.showScreen('main');
                 this.showNotification('Вы вышли из комнаты');
 
@@ -626,18 +795,27 @@
                 this.participantsList.innerHTML = '';
                 this.roomId = null;
                 this.userName = null;
+                this.peerConnection = null;
+                this.localStream = null;
             }
 
             toggleMicrophone() {
-                this.isMicMuted = !this.isMicMuted;
-                if (this.isMicMuted) {
-                    this.micToggleBtn.classList.add('muted');
-                    this.micToggleBtn.innerHTML = '<i>🔇</i>';
-                    this.showNotification('Микрофон отключен');
-                } else {
-                    this.micToggleBtn.classList.remove('muted');
-                    this.micToggleBtn.innerHTML = '<i>🎤</i>';
-                    this.showNotification('Микрофон включен');
+                if (this.localStream) {
+                    const audioTracks = this.localStream.getAudioTracks();
+                    audioTracks.forEach(track => {
+                        track.enabled = !track.enabled;
+                    });
+                    
+                    this.isMicMuted = !this.isMicMuted;
+                    if (this.isMicMuted) {
+                        this.micToggleBtn.classList.add('muted');
+                        this.micToggleBtn.innerHTML = '<i>🔇</i>';
+                        this.showNotification('Микрофон отключен');
+                    } else {
+                        this.micToggleBtn.classList.remove('muted');
+                        this.micToggleBtn.innerHTML = '<i>🎤</i>';
+                        this.showNotification('Микрофон включен');
+                    }
                 }
             }
 
@@ -664,7 +842,7 @@
 
         // Инициализация приложения
         document.addEventListener('DOMContentLoaded', () => {
-            new VoiceChat();
+            new WebRTCVoiceChat();
         });
     </script>
 </body>
