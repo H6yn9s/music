@@ -313,6 +313,18 @@
         .audio-element {
             display: none;
         }
+
+        .connection-status {
+            margin-top: 10px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .connection-status.connected {
+            background: rgba(76, 175, 80, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -389,10 +401,11 @@
                 Поделитесь ID комнаты с друзьями
             </div>
             
-            <div class="participants">
+            <div class="participants" id="waiting-participants">
                 <div class="participant">
                     <div class="participant-avatar">👤</div>
                     <div id="host-participant">Вы</div>
+                    <div class="connection-status" id="host-status">Ожидание...</div>
                 </div>
             </div>
         </div>
@@ -453,6 +466,7 @@
                 this.callTime = 0;
                 this.callInterval = null;
                 this.isMicMuted = false;
+                this.remoteStreams = new Map();
                 
                 // WebRTC configuration
                 this.rtcConfig = {
@@ -499,7 +513,9 @@
                 this.displayRoomId = document.getElementById('display-room-id');
                 this.callTimer = document.getElementById('call-timer');
                 this.participantsList = document.getElementById('participants-list');
+                this.waitingParticipants = document.getElementById('waiting-participants');
                 this.hostParticipant = document.getElementById('host-participant');
+                this.hostStatus = document.getElementById('host-status');
                 this.notification = document.getElementById('notification');
                 this.connectionStatus = document.getElementById('connection-status');
                 this.remoteAudio = document.getElementById('remote-audio');
@@ -567,6 +583,10 @@
                 this.showScreen('waiting');
                 this.showNotification('Комната создана! Поделитесь ID с друзьями');
 
+                // Добавляем хост в список участников
+                this.addParticipant(userName, true, 'waiting-participants');
+                this.hostStatus.textContent = 'Готов к подключению';
+
                 // Инициализируем WebRTC как хост
                 await this.initializeWebRTC(true);
             }
@@ -593,12 +613,26 @@
                 this.startCallTimer();
                 this.animateVoiceVisualizer();
 
+                // Добавляем себя в список участников
+                this.addParticipant(userName, true, 'participants-list');
+
                 // Инициализируем WebRTC как гость
                 await this.initializeWebRTC(false);
 
                 // Отправляем сигнал о присоединении
                 this.sendSignal({
                     type: 'join',
+                    roomId: this.roomId,
+                    userName: this.userName
+                });
+
+                // Создаем offer для подключения к хосту
+                const offer = await this.peerConnection.createOffer();
+                await this.peerConnection.setLocalDescription(offer);
+                
+                this.sendSignal({
+                    type: 'offer',
+                    offer: offer,
                     roomId: this.roomId,
                     userName: this.userName
                 });
@@ -627,9 +661,21 @@
                     // Обработка входящих треков
                     this.peerConnection.ontrack = (event) => {
                         const [remoteStream] = event.streams;
-                        this.remoteAudio.srcObject = remoteStream;
+                        const participantId = event.track.id;
+                        
+                        this.remoteStreams.set(participantId, remoteStream);
+                        
+                        // Создаем аудио элемент для каждого участника
+                        const audioElement = new Audio();
+                        audioElement.srcObject = remoteStream;
+                        audioElement.autoplay = true;
+                        document.body.appendChild(audioElement);
+                        
                         this.showNotification('Соединение установлено! Говорите сейчас');
                         this.connectionStatus.textContent = 'Соединение установлено';
+                        
+                        // Обновляем статус участника
+                        this.updateParticipantStatus(participantId, 'connected');
                     };
 
                     // Обработка ICE кандидатов
@@ -638,23 +684,20 @@
                             this.sendSignal({
                                 type: 'ice-candidate',
                                 candidate: event.candidate,
-                                roomId: this.roomId
+                                roomId: this.roomId,
+                                userName: this.userName
                             });
                         }
                     };
 
-                    // Создаем offer если мы инициатор
-                    if (isOfferer) {
-                        const offer = await this.peerConnection.createOffer();
-                        await this.peerConnection.setLocalDescription(offer);
-                        
-                        this.sendSignal({
-                            type: 'offer',
-                            offer: offer,
-                            roomId: this.roomId,
-                            userName: this.userName
-                        });
-                    }
+                    // Обработка изменения состояния соединения
+                    this.peerConnection.onconnectionstatechange = () => {
+                        console.log('Connection state:', this.peerConnection.connectionState);
+                        if (this.peerConnection.connectionState === 'connected') {
+                            this.connectionStatus.textContent = 'Соединение установлено';
+                            this.showNotification('Подключение успешно установлено!');
+                        }
+                    };
 
                 } catch (error) {
                     console.error('Error initializing WebRTC:', error);
@@ -666,40 +709,58 @@
                 try {
                     if (!this.peerConnection) return;
 
+                    console.log('Handling signal:', message.type, message);
+
                     switch (message.type) {
-                        case 'offer':
-                            await this.peerConnection.setRemoteDescription(message.offer);
-                            const answer = await this.peerConnection.createAnswer();
-                            await this.peerConnection.setLocalDescription(answer);
-                            
-                            this.sendSignal({
-                                type: 'answer',
-                                answer: answer,
-                                roomId: this.roomId,
-                                userName: this.userName
-                            });
-                            break;
-
-                        case 'answer':
-                            await this.peerConnection.setRemoteDescription(message.answer);
-                            break;
-
-                        case 'ice-candidate':
-                            await this.peerConnection.addIceCandidate(message.candidate);
-                            break;
-
                         case 'join':
                             if (this.isHost) {
+                                this.showNotification(`${message.userName} присоединился к комнате`);
+                                this.addParticipant(message.userName, false, 'waiting-participants');
+                            }
+                            break;
+
+                        case 'offer':
+                            if (this.isHost) {
+                                // Хост принимает входящее соединение
+                                await this.peerConnection.setRemoteDescription(message.offer);
+                                const answer = await this.peerConnection.createAnswer();
+                                await this.peerConnection.setLocalDescription(answer);
+                                
+                                this.sendSignal({
+                                    type: 'answer',
+                                    answer: answer,
+                                    roomId: this.roomId,
+                                    userName: this.userName
+                                });
+
+                                // Переходим в голосовой чат
                                 this.showScreen('voice');
                                 this.startCallTimer();
                                 this.animateVoiceVisualizer();
-                                this.addParticipant(message.userName, false);
-                                this.showNotification(`${message.userName} присоединился к чату`);
+                                this.addParticipant(message.userName, false, 'participants-list');
+                            }
+                            break;
+
+                        case 'answer':
+                            if (!this.isHost) {
+                                // Гост устанавливает соединение с ответом
+                                await this.peerConnection.setRemoteDescription(message.answer);
+                                this.addParticipant(this.userName, true, 'participants-list');
+                                this.addParticipant(message.userName, false, 'participants-list');
+                            }
+                            break;
+
+                        case 'ice-candidate':
+                            try {
+                                await this.peerConnection.addIceCandidate(message.candidate);
+                            } catch (e) {
+                                console.warn('Error adding ICE candidate:', e);
                             }
                             break;
                     }
                 } catch (error) {
                     console.error('Error handling signaling message:', error);
+                    this.showNotification('Ошибка установки соединения');
                 }
             }
 
@@ -754,19 +815,31 @@
                 }, 1000);
             }
 
-            addParticipant(name, isLocal = true) {
+            addParticipant(name, isLocal = true, containerId) {
                 const participantId = Date.now().toString();
-                this.participants.set(participantId, { name, isLocal });
+                this.participants.set(participantId, { name, isLocal, status: 'connecting' });
+
+                const container = containerId === 'waiting-participants' ? 
+                    this.waitingParticipants : this.participantsList;
 
                 const participantElement = document.createElement('div');
                 participantElement.className = 'participant';
+                participantElement.id = `participant-${participantId}`;
                 participantElement.innerHTML = `
                     <div class="participant-avatar">👤</div>
                     <div>${name} ${isLocal ? '(Вы)' : ''}</div>
-                    ${!isLocal ? '<div class="user-status">🎤</div>' : ''}
+                    <div class="connection-status" id="status-${participantId}">Подключение...</div>
                 `;
 
-                this.participantsList.appendChild(participantElement);
+                container.appendChild(participantElement);
+            }
+
+            updateParticipantStatus(participantId, status) {
+                const statusElement = document.getElementById(`status-${participantId}`);
+                if (statusElement) {
+                    statusElement.textContent = status === 'connected' ? 'Подключен' : 'Отключен';
+                    statusElement.className = `connection-status ${status === 'connected' ? 'connected' : ''}`;
+                }
             }
 
             leaveRoom() {
@@ -787,16 +860,23 @@
                 delete signals[this.roomId];
                 localStorage.setItem('webrtc_signals', JSON.stringify(signals));
 
+                // Удаляем все аудио элементы
+                document.querySelectorAll('audio').forEach(audio => {
+                    if (audio.id !== 'remote-audio') audio.remove();
+                });
+
                 this.showScreen('main');
                 this.showNotification('Вы вышли из комнаты');
 
                 // Очистка
                 this.participants.clear();
                 this.participantsList.innerHTML = '';
+                this.waitingParticipants.innerHTML = '';
                 this.roomId = null;
                 this.userName = null;
                 this.peerConnection = null;
                 this.localStream = null;
+                this.remoteStreams.clear();
             }
 
             toggleMicrophone() {
