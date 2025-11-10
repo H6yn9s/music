@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VoiceChat | WebRTC голосовой чат</title>
+    <title>VoiceChat | Улучшенный WebRTC чат</title>
     <style>
         * {
             margin: 0;
@@ -88,6 +88,12 @@
             background: rgba(255, 255, 255, 0.1);
         }
 
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 14px;
+            width: auto;
+        }
+
         .input-group {
             margin-bottom: 20px;
             text-align: left;
@@ -112,6 +118,22 @@
 
         .input-field::placeholder {
             color: rgba(255, 255, 255, 0.7);
+        }
+
+        .select-field {
+            width: 100%;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .select-field option {
+            background: #764ba2;
+            color: white;
         }
 
         .room-info {
@@ -250,6 +272,7 @@
         .timer {
             font-size: 24px;
             margin: 10px 0;
+            font-variant-numeric: tabular-nums;
         }
 
         .back-btn {
@@ -267,6 +290,8 @@
 
         .participants {
             margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
         }
 
         .participant {
@@ -325,24 +350,119 @@
         .connection-status.connected {
             background: rgba(76, 175, 80, 0.3);
         }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .friends-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .friend-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .friend-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .settings-section {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .settings-title {
+            font-size: 16px;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
     </style>
 </head>
 <body>
     <div class="notification" id="notification"></div>
     
     <div class="container">
-        <!-- Главный экран -->
-        <div class="glass-card" id="main-screen">
+        <!-- Экран регистрации/входа -->
+        <div class="glass-card" id="auth-screen">
             <div class="logo">VoiceChat</div>
-            <div class="tagline">WebRTC голосовой чат с реальными людьми</div>
+            <div class="tagline">Зарегистрируйтесь или войдите в аккаунт</div>
+            
+            <div class="tabs">
+                <button class="tab active" id="login-tab">Вход</button>
+                <button class="tab" id="register-tab">Регистрация</button>
+            </div>
+            
+            <div class="input-group">
+                <label class="input-label">Имя пользователя</label>
+                <input type="text" class="input-field" id="auth-username" placeholder="Введите username">
+                <div class="error-message" id="username-error"></div>
+            </div>
+            
+            <div class="input-group">
+                <label class="input-label">Пароль</label>
+                <input type="password" class="input-field" id="auth-password" placeholder="Введите пароль">
+                <div class="error-message" id="password-error"></div>
+            </div>
+            
+            <button class="btn btn-primary" id="auth-btn">Войти</button>
+        </div>
+
+        <!-- Главный экран -->
+        <div class="glass-card" id="main-screen" style="display: none;">
+            <div class="chat-header">
+                <div>Добро пожаловать, <span id="user-display-name">User</span>!</div>
+                <button class="btn-small btn-secondary" id="settings-btn">Настройки</button>
+            </div>
             
             <button class="btn btn-primary" id="create-room">Создать комнату</button>
             <button class="btn btn-secondary" id="join-room">Присоединиться к комнате</button>
             
-            <div class="features">
-                <div class="feature">🔒 P2P соединение</div>
-                <div class="feature">🎤 Реальное общение</div>
-                <div class="feature">🚀 WebRTC технология</div>
+            <div class="tabs">
+                <button class="tab active" id="friends-tab">Друзья</button>
+                <button class="tab" id="add-friend-tab">Добавить друга</button>
+            </div>
+            
+            <div class="friends-list" id="friends-list">
+                <!-- Список друзей -->
+            </div>
+            
+            <div class="input-group" id="add-friend-section" style="display: none;">
+                <label class="input-label">Username друга</label>
+                <input type="text" class="input-field" id="friend-username" placeholder="Введите username">
+                <button class="btn btn-primary" id="add-friend-btn">Добавить</button>
             </div>
         </div>
 
@@ -354,11 +474,6 @@
                 <div style="width: 60px;"></div>
             </div>
             
-            <div class="input-group">
-                <label class="input-label">Ваше имя</label>
-                <input type="text" class="input-field" id="host-name" placeholder="Введите ваше имя">
-            </div>
-            
             <button class="btn btn-primary" id="create-room-btn">Создать комнату</button>
         </div>
 
@@ -368,11 +483,6 @@
                 <button class="back-btn" id="back-from-join">← Назад</button>
                 <div>Присоединение к комнате</div>
                 <div style="width: 60px;"></div>
-            </div>
-            
-            <div class="input-group">
-                <label class="input-label">Ваше имя</label>
-                <input type="text" class="input-field" id="guest-name" placeholder="Введите ваше имя">
             </div>
             
             <div class="input-group">
@@ -405,7 +515,7 @@
                 <div class="participant">
                     <div class="participant-avatar">👤</div>
                     <div id="host-participant">Вы</div>
-                    <div class="connection-status" id="host-status">Ожидание...</div>
+                    <div class="connection-status connected" id="host-status">Подключен</div>
                 </div>
             </div>
         </div>
@@ -448,25 +558,71 @@
                 </button>
             </div>
         </div>
+
+        <!-- Экран настроек -->
+        <div class="glass-card" id="settings-screen" style="display: none;">
+            <div class="chat-header">
+                <button class="back-btn" id="back-from-settings">← Назад</button>
+                <div>Настройки</div>
+                <div style="width: 60px;"></div>
+            </div>
+            
+            <div class="settings-section">
+                <div class="settings-title">Аудио устройства</div>
+                <div class="input-group">
+                    <label class="input-label">Микрофон</label>
+                    <select class="select-field" id="microphone-select">
+                        <option value="">По умолчанию</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Динамики</label>
+                    <select class="select-field" id="speaker-select">
+                        <option value="">По умолчанию</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <div class="settings-title">Аккаунт</div>
+                <div class="participant">
+                    <div class="participant-avatar">👤</div>
+                    <div>
+                        <div id="settings-username">User</div>
+                        <div style="font-size: 12px; opacity: 0.7;">Online</div>
+                    </div>
+                </div>
+                <button class="btn btn-secondary" id="logout-btn">Выйти</button>
+            </div>
+        </div>
     </div>
 
     <!-- Аудио элементы для воспроизведения удаленного звука -->
     <audio id="remote-audio" class="audio-element" autoplay></audio>
 
     <script>
-        class WebRTCVoiceChat {
+        class AdvancedVoiceChat {
             constructor() {
                 this.peerConnection = null;
                 this.localStream = null;
-                this.dataChannel = null;
                 this.isHost = false;
                 this.roomId = null;
                 this.userName = null;
+                this.userId = null;
                 this.participants = new Map();
-                this.callTime = 0;
+                this.callStartTime = null;
                 this.callInterval = null;
                 this.isMicMuted = false;
                 this.remoteStreams = new Map();
+                this.friends = new Map();
+                this.audioDevices = {
+                    microphones: [],
+                    speakers: []
+                };
+                this.selectedDevices = {
+                    microphone: '',
+                    speaker: ''
+                };
                 
                 // WebRTC configuration
                 this.rtcConfig = {
@@ -479,34 +635,58 @@
                 this.initializeElements();
                 this.setupEventListeners();
                 this.setupSignalingSimulation();
+                this.loadUserData();
+                this.loadAudioDevices();
             }
 
             initializeElements() {
                 // Экраны
                 this.screens = {
+                    auth: document.getElementById('auth-screen'),
                     main: document.getElementById('main-screen'),
                     create: document.getElementById('create-screen'),
                     join: document.getElementById('join-screen'),
                     waiting: document.getElementById('waiting-screen'),
-                    voice: document.getElementById('voice-chat-screen')
+                    voice: document.getElementById('voice-chat-screen'),
+                    settings: document.getElementById('settings-screen')
                 };
 
-                // Кнопки
+                // Кнопки аутентификации
+                this.loginTab = document.getElementById('login-tab');
+                this.registerTab = document.getElementById('register-tab');
+                this.authBtn = document.getElementById('auth-btn');
+                this.authUsername = document.getElementById('auth-username');
+                this.authPassword = document.getElementById('auth-password');
+
+                // Основные кнопки
                 this.createRoomBtn = document.getElementById('create-room');
                 this.joinRoomBtn = document.getElementById('join-room');
                 this.backFromCreateBtn = document.getElementById('back-from-create');
                 this.backFromJoinBtn = document.getElementById('back-from-join');
                 this.backFromWaitingBtn = document.getElementById('back-from-waiting');
                 this.backFromCallBtn = document.getElementById('back-from-call');
+                this.backFromSettingsBtn = document.getElementById('back-from-settings');
                 this.createRoomFinalBtn = document.getElementById('create-room-btn');
                 this.joinRoomFinalBtn = document.getElementById('join-room-btn');
                 this.micToggleBtn = document.getElementById('mic-toggle');
                 this.endCallBtn = document.getElementById('end-call');
                 this.copyRoomIdBtn = document.getElementById('copy-room-id');
+                this.settingsBtn = document.getElementById('settings-btn');
+                this.logoutBtn = document.getElementById('logout-btn');
+
+                // Друзья
+                this.friendsTab = document.getElementById('friends-tab');
+                this.addFriendTab = document.getElementById('add-friend-tab');
+                this.friendsList = document.getElementById('friends-list');
+                this.addFriendSection = document.getElementById('add-friend-section');
+                this.friendUsername = document.getElementById('friend-username');
+                this.addFriendBtn = document.getElementById('add-friend-btn');
+
+                // Настройки
+                this.microphoneSelect = document.getElementById('microphone-select');
+                this.speakerSelect = document.getElementById('speaker-select');
 
                 // Поля ввода
-                this.hostNameInput = document.getElementById('host-name');
-                this.guestNameInput = document.getElementById('guest-name');
                 this.roomIdInput = document.getElementById('room-id');
 
                 // Элементы отображения
@@ -519,9 +699,20 @@
                 this.notification = document.getElementById('notification');
                 this.connectionStatus = document.getElementById('connection-status');
                 this.remoteAudio = document.getElementById('remote-audio');
+                this.userDisplayName = document.getElementById('user-display-name');
+                this.settingsUsername = document.getElementById('settings-username');
+
+                // Ошибки
+                this.usernameError = document.getElementById('username-error');
+                this.passwordError = document.getElementById('password-error');
             }
 
             setupEventListeners() {
+                // Аутентификация
+                this.loginTab.addEventListener('click', () => this.switchAuthTab('login'));
+                this.registerTab.addEventListener('click', () => this.switchAuthTab('register'));
+                this.authBtn.addEventListener('click', () => this.handleAuth());
+
                 // Навигация
                 this.createRoomBtn.addEventListener('click', () => this.showScreen('create'));
                 this.joinRoomBtn.addEventListener('click', () => this.showScreen('join'));
@@ -529,15 +720,249 @@
                 this.backFromJoinBtn.addEventListener('click', () => this.showScreen('main'));
                 this.backFromWaitingBtn.addEventListener('click', () => this.leaveRoom());
                 this.backFromCallBtn.addEventListener('click', () => this.leaveRoom());
+                this.backFromSettingsBtn.addEventListener('click', () => this.showScreen('main'));
                 this.endCallBtn.addEventListener('click', () => this.leaveRoom());
+                this.settingsBtn.addEventListener('click', () => this.showScreen('settings'));
+                this.logoutBtn.addEventListener('click', () => this.logout());
 
                 // Создание и присоединение
                 this.createRoomFinalBtn.addEventListener('click', () => this.createRoom());
                 this.joinRoomFinalBtn.addEventListener('click', () => this.joinRoom());
                 this.copyRoomIdBtn.addEventListener('click', () => this.copyRoomId());
 
+                // Друзья
+                this.friendsTab.addEventListener('click', () => this.switchFriendsTab('friends'));
+                this.addFriendTab.addEventListener('click', () => this.switchFriendsTab('add'));
+                this.addFriendBtn.addEventListener('click', () => this.addFriend());
+
                 // Управление голосом
                 this.micToggleBtn.addEventListener('click', () => this.toggleMicrophone());
+
+                // Настройки устройств
+                this.microphoneSelect.addEventListener('change', (e) => this.changeAudioDevice('microphone', e.target.value));
+                this.speakerSelect.addEventListener('change', (e) => this.changeAudioDevice('speaker', e.target.value));
+            }
+
+            // Система аутентификации и пользователей
+            switchAuthTab(tab) {
+                this.loginTab.classList.toggle('active', tab === 'login');
+                this.registerTab.classList.toggle('active', tab === 'register');
+                this.authBtn.textContent = tab === 'login' ? 'Войти' : 'Зарегистрироваться';
+            }
+
+            async handleAuth() {
+                const username = this.authUsername.value.trim();
+                const password = this.authPassword.value.trim();
+
+                // Валидация
+                if (!username) {
+                    this.showError(this.usernameError, 'Введите имя пользователя');
+                    return;
+                }
+                if (!password) {
+                    this.showError(this.passwordError, 'Введите пароль');
+                    return;
+                }
+
+                const users = JSON.parse(localStorage.getItem('voicechat_users') || '{}');
+                const isLogin = this.loginTab.classList.contains('active');
+
+                if (isLogin) {
+                    // Вход
+                    if (!users[username] || users[username].password !== password) {
+                        this.showError(this.passwordError, 'Неверное имя пользователя или пароль');
+                        return;
+                    }
+                    this.userId = username;
+                    this.userName = users[username].displayName || username;
+                } else {
+                    // Регистрация
+                    if (users[username]) {
+                        this.showError(this.usernameError, 'Имя пользователя уже занято');
+                        return;
+                    }
+                    users[username] = {
+                        password: password,
+                        displayName: username,
+                        createdAt: new Date().toISOString()
+                    };
+                    localStorage.setItem('voicechat_users', JSON.stringify(users));
+                    this.userId = username;
+                    this.userName = username;
+                }
+
+                // Сохраняем данные пользователя
+                localStorage.setItem('current_user', JSON.stringify({
+                    id: this.userId,
+                    name: this.userName
+                }));
+
+                this.loadUserData();
+                this.showScreen('main');
+                this.showNotification(isLogin ? 'Вход выполнен!' : 'Регистрация успешна!');
+            }
+
+            loadUserData() {
+                const currentUser = JSON.parse(localStorage.getItem('current_user') || 'null');
+                if (currentUser) {
+                    this.userId = currentUser.id;
+                    this.userName = currentUser.name;
+                    this.userDisplayName.textContent = this.userName;
+                    this.settingsUsername.textContent = this.userName;
+                    this.showScreen('main');
+                    this.loadFriends();
+                    this.loadAudioDevices();
+                } else {
+                    this.showScreen('auth');
+                }
+            }
+
+            logout() {
+                localStorage.removeItem('current_user');
+                this.userId = null;
+                this.userName = null;
+                this.showScreen('auth');
+                this.showNotification('Вы вышли из аккаунта');
+            }
+
+            // Система друзей
+            switchFriendsTab(tab) {
+                this.friendsTab.classList.toggle('active', tab === 'friends');
+                this.addFriendTab.classList.toggle('active', tab === 'add');
+                this.friendsList.style.display = tab === 'friends' ? 'block' : 'none';
+                this.addFriendSection.style.display = tab === 'add' ? 'block' : 'none';
+            }
+
+            loadFriends() {
+                const friendsData = JSON.parse(localStorage.getItem(`friends_${this.userId}`) || '{}');
+                this.friends = new Map(Object.entries(friendsData));
+                this.renderFriendsList();
+            }
+
+            renderFriendsList() {
+                this.friendsList.innerHTML = '';
+                
+                if (this.friends.size === 0) {
+                    this.friendsList.innerHTML = '<div class="waiting-message">У вас пока нет друзей</div>';
+                    return;
+                }
+
+                this.friends.forEach((status, friendId) => {
+                    const friendElement = document.createElement('div');
+                    friendElement.className = 'friend-item';
+                    friendElement.innerHTML = `
+                        <div>
+                            <div>${friendId}</div>
+                            <div style="font-size: 12px; opacity: 0.7;">${status}</div>
+                        </div>
+                        <div class="friend-actions">
+                            <button class="btn-small btn-primary" onclick="voiceChat.inviteFriend('${friendId}')">Пригласить</button>
+                            <button class="btn-small btn-secondary" onclick="voiceChat.removeFriend('${friendId}')">Удалить</button>
+                        </div>
+                    `;
+                    this.friendsList.appendChild(friendElement);
+                });
+            }
+
+            addFriend() {
+                const friendUsername = this.friendUsername.value.trim();
+                if (!friendUsername) {
+                    this.showNotification('Введите имя пользователя');
+                    return;
+                }
+
+                const users = JSON.parse(localStorage.getItem('voicechat_users') || '{}');
+                if (!users[friendUsername]) {
+                    this.showNotification('Пользователь не найден');
+                    return;
+                }
+
+                if (friendUsername === this.userId) {
+                    this.showNotification('Нельзя добавить себя в друзья');
+                    return;
+                }
+
+                if (this.friends.has(friendUsername)) {
+                    this.showNotification('Этот пользователь уже у вас в друзьях');
+                    return;
+                }
+
+                this.friends.set(friendUsername, 'online');
+                this.saveFriends();
+                this.friendUsername.value = '';
+                this.showNotification(`Пользователь ${friendUsername} добавлен в друзья`);
+                this.renderFriendsList();
+            }
+
+            removeFriend(friendId) {
+                this.friends.delete(friendId);
+                this.saveFriends();
+                this.renderFriendsList();
+                this.showNotification('Друг удален');
+            }
+
+            inviteFriend(friendId) {
+                this.showNotification(`Приглашение отправлено ${friendId} (в реальном приложении здесь была бы система уведомлений)`);
+            }
+
+            saveFriends() {
+                const friendsObj = Object.fromEntries(this.friends);
+                localStorage.setItem(`friends_${this.userId}`, JSON.stringify(friendsObj));
+            }
+
+            // Система аудио устройств
+            async loadAudioDevices() {
+                try {
+                    await navigator.mediaDevices.getUserMedia({ audio: true });
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    
+                    this.audioDevices.microphones = devices.filter(device => device.kind === 'audioinput');
+                    this.audioDevices.speakers = devices.filter(device => device.kind === 'audiooutput');
+                    
+                    this.renderAudioDevices();
+                } catch (error) {
+                    console.error('Error loading audio devices:', error);
+                }
+            }
+
+            renderAudioDevices() {
+                // Микрофоны
+                this.microphoneSelect.innerHTML = '<option value="">По умолчанию</option>';
+                this.audioDevices.microphones.forEach(device => {
+                    const option = document.createElement('option');
+                    option.value = device.deviceId;
+                    option.textContent = device.label || `Микрофон ${this.microphoneSelect.options.length}`;
+                    this.microphoneSelect.appendChild(option);
+                });
+
+                // Динамики
+                this.speakerSelect.innerHTML = '<option value="">По умолчанию</option>';
+                this.audioDevices.speakers.forEach(device => {
+                    const option = document.createElement('option');
+                    option.value = device.deviceId;
+                    option.textContent = device.label || `Динамики ${this.speakerSelect.options.length}`;
+                    this.speakerSelect.appendChild(option);
+                });
+
+                // Загружаем сохраненные настройки
+                const savedDevices = JSON.parse(localStorage.getItem(`audio_devices_${this.userId}`) || '{}');
+                if (savedDevices.microphone) {
+                    this.microphoneSelect.value = savedDevices.microphone;
+                    this.selectedDevices.microphone = savedDevices.microphone;
+                }
+                if (savedDevices.speaker) {
+                    this.speakerSelect.value = savedDevices.speaker;
+                    this.selectedDevices.speaker = savedDevices.speaker;
+                }
+            }
+
+            changeAudioDevice(type, deviceId) {
+                this.selectedDevices[type] = deviceId;
+                localStorage.setItem(`audio_devices_${this.userId}`, JSON.stringify(this.selectedDevices));
+                
+                if (type === 'speaker' && this.remoteAudio.srcObject) {
+                    this.remoteAudio.setSinkId(deviceId);
+                }
             }
 
             // Имитация signaling сервера через localStorage
@@ -562,43 +987,37 @@
                 }, duration);
             }
 
+            showError(element, message) {
+                element.textContent = message;
+                element.style.display = 'block';
+                setTimeout(() => {
+                    element.style.display = 'none';
+                }, 3000);
+            }
+
             generateRoomId() {
                 return Math.random().toString(36).substring(2, 8).toUpperCase();
             }
 
             async createRoom() {
-                const userName = this.hostNameInput.value.trim();
-                if (!userName) {
-                    this.showNotification('Введите ваше имя');
-                    return;
-                }
-
                 this.isHost = true;
                 this.roomId = this.generateRoomId();
-                this.userName = userName;
 
                 this.displayRoomId.textContent = this.roomId;
-                this.hostParticipant.textContent = userName;
+                this.hostParticipant.textContent = this.userName;
 
                 this.showScreen('waiting');
                 this.showNotification('Комната создана! Поделитесь ID с друзьями');
 
                 // Добавляем хост в список участников
-                this.addParticipant(userName, true, 'waiting-participants');
-                this.hostStatus.textContent = 'Готов к подключению';
+                this.addParticipant(this.userName, true, 'waiting-participants');
 
                 // Инициализируем WebRTC как хост
                 await this.initializeWebRTC(true);
             }
 
             async joinRoom() {
-                const userName = this.guestNameInput.value.trim();
                 const roomId = this.roomIdInput.value.trim().toUpperCase();
-
-                if (!userName) {
-                    this.showNotification('Введите ваше имя');
-                    return;
-                }
 
                 if (!roomId) {
                     this.showNotification('Введите ID комнаты');
@@ -607,14 +1026,13 @@
 
                 this.isHost = false;
                 this.roomId = roomId;
-                this.userName = userName;
 
                 this.showScreen('voice');
                 this.startCallTimer();
                 this.animateVoiceVisualizer();
 
                 // Добавляем себя в список участников
-                this.addParticipant(userName, true, 'participants-list');
+                this.addParticipant(this.userName, true, 'participants-list');
 
                 // Инициализируем WebRTC как гость
                 await this.initializeWebRTC(false);
@@ -623,7 +1041,8 @@
                 this.sendSignal({
                     type: 'join',
                     roomId: this.roomId,
-                    userName: this.userName
+                    userName: this.userName,
+                    userId: this.userId
                 });
 
                 // Создаем offer для подключения к хосту
@@ -634,21 +1053,29 @@
                     type: 'offer',
                     offer: offer,
                     roomId: this.roomId,
-                    userName: this.userName
+                    userName: this.userName,
+                    userId: this.userId
                 });
             }
 
             async initializeWebRTC(isOfferer) {
                 try {
-                    // Получаем доступ к микрофону
-                    this.localStream = await navigator.mediaDevices.getUserMedia({
+                    const constraints = {
                         audio: {
                             echoCancellation: true,
                             noiseSuppression: true,
                             autoGainControl: true
                         },
                         video: false
-                    });
+                    };
+
+                    // Применяем выбранное устройство
+                    if (this.selectedDevices.microphone) {
+                        constraints.audio.deviceId = { exact: this.selectedDevices.microphone };
+                    }
+
+                    // Получаем доступ к микрофону
+                    this.localStream = await navigator.mediaDevices.getUserMedia(constraints);
 
                     // Создаем Peer Connection
                     this.peerConnection = new RTCPeerConnection(this.rtcConfig);
@@ -665,17 +1092,15 @@
                         
                         this.remoteStreams.set(participantId, remoteStream);
                         
-                        // Создаем аудио элемент для каждого участника
-                        const audioElement = new Audio();
-                        audioElement.srcObject = remoteStream;
-                        audioElement.autoplay = true;
-                        document.body.appendChild(audioElement);
+                        // Применяем выбранные динамики
+                        if (this.selectedDevices.speaker) {
+                            this.remoteAudio.setSinkId(this.selectedDevices.speaker);
+                        }
+                        
+                        this.remoteAudio.srcObject = remoteStream;
                         
                         this.showNotification('Соединение установлено! Говорите сейчас');
                         this.connectionStatus.textContent = 'Соединение установлено';
-                        
-                        // Обновляем статус участника
-                        this.updateParticipantStatus(participantId, 'connected');
                     };
 
                     // Обработка ICE кандидатов
@@ -685,14 +1110,14 @@
                                 type: 'ice-candidate',
                                 candidate: event.candidate,
                                 roomId: this.roomId,
-                                userName: this.userName
+                                userName: this.userName,
+                                userId: this.userId
                             });
                         }
                     };
 
                     // Обработка изменения состояния соединения
                     this.peerConnection.onconnectionstatechange = () => {
-                        console.log('Connection state:', this.peerConnection.connectionState);
                         if (this.peerConnection.connectionState === 'connected') {
                             this.connectionStatus.textContent = 'Соединение установлено';
                             this.showNotification('Подключение успешно установлено!');
@@ -709,8 +1134,6 @@
                 try {
                     if (!this.peerConnection) return;
 
-                    console.log('Handling signal:', message.type, message);
-
                     switch (message.type) {
                         case 'join':
                             if (this.isHost) {
@@ -721,7 +1144,6 @@
 
                         case 'offer':
                             if (this.isHost) {
-                                // Хост принимает входящее соединение
                                 await this.peerConnection.setRemoteDescription(message.offer);
                                 const answer = await this.peerConnection.createAnswer();
                                 await this.peerConnection.setLocalDescription(answer);
@@ -730,10 +1152,10 @@
                                     type: 'answer',
                                     answer: answer,
                                     roomId: this.roomId,
-                                    userName: this.userName
+                                    userName: this.userName,
+                                    userId: this.userId
                                 });
 
-                                // Переходим в голосовой чат
                                 this.showScreen('voice');
                                 this.startCallTimer();
                                 this.animateVoiceVisualizer();
@@ -743,9 +1165,7 @@
 
                         case 'answer':
                             if (!this.isHost) {
-                                // Гост устанавливает соединение с ответом
                                 await this.peerConnection.setRemoteDescription(message.answer);
-                                this.addParticipant(this.userName, true, 'participants-list');
                                 this.addParticipant(message.userName, false, 'participants-list');
                             }
                             break;
@@ -764,14 +1184,19 @@
                 }
             }
 
-            // Имитация signaling сервера через localStorage
             sendSignal(message) {
                 const signals = JSON.parse(localStorage.getItem('webrtc_signals') || '{}');
                 signals[this.roomId] = signals[this.roomId] || [];
+                
+                // Удаляем старые сигналы от этого пользователя
+                signals[this.roomId] = signals[this.roomId].filter(
+                    signal => !(signal.type === message.type && signal.userId === message.userId)
+                );
+                
                 signals[this.roomId].push({
                     ...message,
                     timestamp: Date.now(),
-                    sender: this.userName
+                    sender: this.userId
                 });
                 localStorage.setItem('webrtc_signals', JSON.stringify(signals));
             }
@@ -782,17 +1207,15 @@
                 const signals = JSON.parse(localStorage.getItem('webrtc_signals') || '{}');
                 const roomSignals = signals[this.roomId] || [];
 
-                roomSignals.forEach((signal, index) => {
-                    // Пропускаем собственные сигналы
-                    if (signal.sender !== this.userName) {
+                roomSignals.forEach((signal) => {
+                    if (signal.sender !== this.userId) {
                         this.handleSignalingMessage(signal);
                     }
                 });
 
-                // Очищаем обработанные сигналы
+                // Очищаем старые сигналы
                 if (roomSignals.length > 0) {
                     signals[this.roomId] = roomSignals.filter(signal => 
-                        signal.sender === this.userName || 
                         Date.now() - signal.timestamp < 30000
                     );
                     localStorage.setItem('webrtc_signals', JSON.stringify(signals));
@@ -806,21 +1229,37 @@
             }
 
             startCallTimer() {
-                this.callTime = 0;
+                this.callStartTime = Date.now();
+                if (this.callInterval) {
+                    clearInterval(this.callInterval);
+                }
+                
                 this.callInterval = setInterval(() => {
-                    this.callTime++;
-                    const minutes = Math.floor(this.callTime / 60).toString().padStart(2, '0');
-                    const seconds = (this.callTime % 60).toString().padStart(2, '0');
+                    const elapsed = Math.floor((Date.now() - this.callStartTime) / 1000);
+                    const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                    const seconds = (elapsed % 60).toString().padStart(2, '0');
                     this.callTimer.textContent = `${minutes}:${seconds}`;
                 }, 1000);
             }
 
             addParticipant(name, isLocal = true, containerId) {
-                const participantId = Date.now().toString();
+                const participantId = isLocal ? 'local' : `remote-${Date.now()}`;
+                
+                // Проверяем, не добавлен ли уже участник
+                if (this.participants.has(participantId)) {
+                    return;
+                }
+
                 this.participants.set(participantId, { name, isLocal, status: 'connecting' });
 
                 const container = containerId === 'waiting-participants' ? 
                     this.waitingParticipants : this.participantsList;
+
+                // Проверяем, не существует ли уже элемент для этого участника
+                const existingElement = document.getElementById(`participant-${participantId}`);
+                if (existingElement) {
+                    return;
+                }
 
                 const participantElement = document.createElement('div');
                 participantElement.className = 'participant';
@@ -828,23 +1267,18 @@
                 participantElement.innerHTML = `
                     <div class="participant-avatar">👤</div>
                     <div>${name} ${isLocal ? '(Вы)' : ''}</div>
-                    <div class="connection-status" id="status-${participantId}">Подключение...</div>
+                    <div class="connection-status ${isLocal ? 'connected' : ''}" id="status-${participantId}">
+                        ${isLocal ? 'Подключен' : 'Подключение...'}
+                    </div>
                 `;
 
                 container.appendChild(participantElement);
             }
 
-            updateParticipantStatus(participantId, status) {
-                const statusElement = document.getElementById(`status-${participantId}`);
-                if (statusElement) {
-                    statusElement.textContent = status === 'connected' ? 'Подключен' : 'Отключен';
-                    statusElement.className = `connection-status ${status === 'connected' ? 'connected' : ''}`;
-                }
-            }
-
             leaveRoom() {
                 if (this.callInterval) {
                     clearInterval(this.callInterval);
+                    this.callInterval = null;
                 }
 
                 if (this.localStream) {
@@ -860,23 +1294,18 @@
                 delete signals[this.roomId];
                 localStorage.setItem('webrtc_signals', JSON.stringify(signals));
 
-                // Удаляем все аудио элементы
-                document.querySelectorAll('audio').forEach(audio => {
-                    if (audio.id !== 'remote-audio') audio.remove();
-                });
-
                 this.showScreen('main');
                 this.showNotification('Вы вышли из комнаты');
 
                 // Очистка
                 this.participants.clear();
                 this.participantsList.innerHTML = '';
-                this.waitingParticipants.innerHTML = '';
+                this.waitingParticipants.innerHTML = '<div class="participant"><div class="participant-avatar">👤</div><div id="host-participant">Вы</div><div class="connection-status connected" id="host-status">Подключен</div></div>';
                 this.roomId = null;
-                this.userName = null;
                 this.peerConnection = null;
                 this.localStream = null;
                 this.remoteStreams.clear();
+                this.isHost = false;
             }
 
             toggleMicrophone() {
@@ -901,6 +1330,7 @@
 
             animateVoiceVisualizer() {
                 const bars = document.querySelectorAll('.voice-bar');
+                let animationFrame;
                 
                 const updateBars = () => {
                     bars.forEach(bar => {
@@ -912,7 +1342,9 @@
                     });
                     
                     if (this.screens.voice.style.display === 'block') {
-                        setTimeout(updateBars, 200);
+                        animationFrame = setTimeout(updateBars, 200);
+                    } else {
+                        clearTimeout(animationFrame);
                     }
                 };
                 
@@ -921,9 +1353,7 @@
         }
 
         // Инициализация приложения
-        document.addEventListener('DOMContentLoaded', () => {
-            new WebRTCVoiceChat();
-        });
+        const voiceChat = new AdvancedVoiceChat();
     </script>
 </body>
 </html>
