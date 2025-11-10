@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoiceChat | P2P голосовой чат</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            color: white;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .tagline {
+            font-size: 16px;
+            opacity: 0.9;
+            margin-bottom: 25px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .btn-primary {
+            background: rgba(255, 255, 255, 0.9);
+            color: #764ba2;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 14px;
+        }
+
+        .input-field::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .room-info {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .room-id {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            word-break: break-all;
+        }
+
+        .copy-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .voice-chat-container {
+            display: none;
+            flex-direction: column;
+            height: 500px;
+        }
+
+        .chat-header {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .voice-status {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .user-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .avatar-placeholder {
+            font-size: 40px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .voice-visualizer {
+            width: 100%;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            margin: 20px 0;
+        }
+
+        .voice-bar {
+            width: 6px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 3px;
+            transition: height 0.2s ease;
+        }
+
+        .voice-controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .voice-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 20px;
+        }
+
+        .mic-btn {
+            background: rgba(255, 255, 255, 0.9);
+            color: #764ba2;
+        }
+
+        .mic-btn:hover {
+            background: white;
+            transform: scale(1.05);
+        }
+
+        .mic-btn.muted {
+            background: rgba(255, 59, 48, 0.8);
+            color: white;
+        }
+
+        .end-call-btn {
+            background: rgba(255, 59, 48, 0.8);
+            color: white;
+        }
+
+        .end-call-btn:hover {
+            background: rgba(255, 59, 48, 1);
+            transform: scale(1.05);
+        }
+
+        .timer {
+            font-size: 24px;
+            margin: 10px 0;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            opacity: 0.8;
+        }
+
+        .back-btn:hover {
+            opacity: 1;
+        }
+
+        .participants {
+            margin-top: 20px;
+        }
+
+        .participant {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .participant-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            padding: 12px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display: none;
+        }
+
+        .waiting-message {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="notification" id="notification"></div>
+    
+    <div class="container">
+        <!-- Главный экран -->
+        <div class="glass-card" id="main-screen">
+            <div class="logo">VoiceChat</div>
+            <div class="tagline">P2P голосовой чат с реальными людьми</div>
+            
+            <button class="btn btn-primary" id="create-room">Создать комнату</button>
+            <button class="btn btn-secondary" id="join-room">Присоединиться к комнате</button>
+            
+            <div class="features">
+                <div class="feature">🔒 Без сервера</div>
+                <div class="feature">🎤 Реальное общение</div>
+                <div class="feature">🚀 Мгновенное подключение</div>
+            </div>
+        </div>
+
+        <!-- Экран создания комнаты -->
+        <div class="glass-card" id="create-screen" style="display: none;">
+            <div class="chat-header">
+                <button class="back-btn" id="back-from-create">← Назад</button>
+                <div>Создание комнаты</div>
+                <div style="width: 60px;"></div>
+            </div>
+            
+            <div class="input-group">
+                <label class="input-label">Ваше имя</label>
+                <input type="text" class="input-field" id="host-name" placeholder="Введите ваше имя">
+            </div>
+            
+            <button class="btn btn-primary" id="create-room-btn">Создать комнату</button>
+        </div>
+
+        <!-- Экран присоединения -->
+        <div class="glass-card" id="join-screen" style="display: none;">
+            <div class="chat-header">
+                <button class="back-btn" id="back-from-join">← Назад</button>
+                <div>Присоединение к комнате</div>
+                <div style="width: 60px;"></div>
+            </div>
+            
+            <div class="input-group">
+                <label class="input-label">Ваше имя</label>
+                <input type="text" class="input-field" id="guest-name" placeholder="Введите ваше имя">
+            </div>
+            
+            <div class="input-group">
+                <label class="input-label">ID комнаты</label>
+                <input type="text" class="input-field" id="room-id" placeholder="Введите ID комнаты">
+            </div>
+            
+            <button class="btn btn-primary" id="join-room-btn">Присоединиться</button>
+        </div>
+
+        <!-- Экран ожидания -->
+        <div class="glass-card" id="waiting-screen" style="display: none;">
+            <div class="chat-header">
+                <button class="back-btn" id="back-from-waiting">← Назад</button>
+                <div>Ожидание участников</div>
+                <div style="width: 60px;"></div>
+            </div>
+            
+            <div class="room-info">
+                <div class="room-id" id="display-room-id">Загрузка...</div>
+                <button class="copy-btn" id="copy-room-id">Скопировать ссылку</button>
+            </div>
+            
+            <div class="waiting-message">
+                Ожидаем присоединения других участников...
+                Поделитесь ID комнаты с друзьями
+            </div>
+            
+            <div class="participants">
+                <div class="participant">
+                    <div class="participant-avatar">👤</div>
+                    <div id="host-participant">Вы</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Голосовой чат -->
+        <div class="glass-card voice-chat-container" id="voice-chat-screen">
+            <div class="chat-header">
+                <button class="back-btn" id="back-from-call">← Выйти</button>
+                <div>Голосовой чат</div>
+                <div class="timer" id="call-timer">00:00</div>
+            </div>
+            
+            <div class="voice-status">
+                <div class="user-avatar">
+                    <div class="avatar-placeholder">🎙️</div>
+                </div>
+                <div class="tagline" id="room-name">Голосовая комната</div>
+                
+                <div class="voice-visualizer" id="voice-visualizer">
+                    <div class="voice-bar"></div>
+                    <div class="voice-bar"></div>
+                    <div class="voice-bar"></div>
+                    <div class="voice-bar"></div>
+                    <div class="voice-bar"></div>
+                </div>
+                
+                <div class="feature" id="connection-status">Подключение...</div>
+            </div>
+            
+            <div class="participants" id="participants-list">
+                <!-- Участники будут здесь -->
+            </div>
+            
+            <div class="voice-controls">
+                <button class="voice-btn mic-btn" id="mic-toggle">
+                    <i>🎤</i>
+                </button>
+                <button class="voice-btn end-call-btn" id="end-call">
+                    <i>📞</i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class VoiceChat {
+            constructor() {
+                this.peerConnection = null;
+                this.localStream = null;
+                this.dataChannel = null;
+                this.isHost = false;
+                this.roomId = null;
+                this.participants = new Map();
+                this.callTime = 0;
+                this.callInterval = null;
+                this.isMicMuted = false;
+
+                this.initializeElements();
+                this.setupEventListeners();
+            }
+
+            initializeElements() {
+                // Экраны
+                this.screens = {
+                    main: document.getElementById('main-screen'),
+                    create: document.getElementById('create-screen'),
+                    join: document.getElementById('join-screen'),
+                    waiting: document.getElementById('waiting-screen'),
+                    voice: document.getElementById('voice-chat-screen')
+                };
+
+                // Кнопки
+                this.createRoomBtn = document.getElementById('create-room');
+                this.joinRoomBtn = document.getElementById('join-room');
+                this.backFromCreateBtn = document.getElementById('back-from-create');
+                this.backFromJoinBtn = document.getElementById('back-from-join');
+                this.backFromWaitingBtn = document.getElementById('back-from-waiting');
+                this.backFromCallBtn = document.getElementById('back-from-call');
+                this.createRoomFinalBtn = document.getElementById('create-room-btn');
+                this.joinRoomFinalBtn = document.getElementById('join-room-btn');
+                this.micToggleBtn = document.getElementById('mic-toggle');
+                this.endCallBtn = document.getElementById('end-call');
+                this.copyRoomIdBtn = document.getElementById('copy-room-id');
+
+                // Поля ввода
+                this.hostNameInput = document.getElementById('host-name');
+                this.guestNameInput = document.getElementById('guest-name');
+                this.roomIdInput = document.getElementById('room-id');
+
+                // Элементы отображения
+                this.displayRoomId = document.getElementById('display-room-id');
+                this.callTimer = document.getElementById('call-timer');
+                this.participantsList = document.getElementById('participants-list');
+                this.hostParticipant = document.getElementById('host-participant');
+                this.notification = document.getElementById('notification');
+                this.connectionStatus = document.getElementById('connection-status');
+            }
+
+            setupEventListeners() {
+                // Навигация
+                this.createRoomBtn.addEventListener('click', () => this.showScreen('create'));
+                this.joinRoomBtn.addEventListener('click', () => this.showScreen('join'));
+                this.backFromCreateBtn.addEventListener('click', () => this.showScreen('main'));
+                this.backFromJoinBtn.addEventListener('click', () => this.showScreen('main'));
+                this.backFromWaitingBtn.addEventListener('click', () => this.leaveRoom());
+                this.backFromCallBtn.addEventListener('click', () => this.leaveRoom());
+                this.endCallBtn.addEventListener('click', () => this.leaveRoom());
+
+                // Создание и присоединение
+                this.createRoomFinalBtn.addEventListener('click', () => this.createRoom());
+                this.joinRoomFinalBtn.addEventListener('click', () => this.joinRoom());
+                this.copyRoomIdBtn.addEventListener('click', () => this.copyRoomId());
+
+                // Управление голосом
+                this.micToggleBtn.addEventListener('click', () => this.toggleMicrophone());
+            }
+
+            showScreen(screenName) {
+                Object.values(this.screens).forEach(screen => {
+                    screen.style.display = 'none';
+                });
+                this.screens[screenName].style.display = 'block';
+            }
+
+            showNotification(message, duration = 3000) {
+                this.notification.textContent = message;
+                this.notification.style.display = 'block';
+                setTimeout(() => {
+                    this.notification.style.display = 'none';
+                }, duration);
+            }
+
+            generateRoomId() {
+                return Math.random().toString(36).substring(2, 8).toUpperCase();
+            }
+
+            async createRoom() {
+                const userName = this.hostNameInput.value.trim();
+                if (!userName) {
+                    this.showNotification('Введите ваше имя');
+                    return;
+                }
+
+                this.isHost = true;
+                this.roomId = this.generateRoomId();
+                this.userName = userName;
+
+                this.displayRoomId.textContent = this.roomId;
+                this.hostParticipant.textContent = userName;
+
+                this.showScreen('waiting');
+                this.showNotification('Комната создана! Поделитесь ID с друзьями');
+
+                // Имитируем ожидание подключения
+                setTimeout(() => {
+                    this.showNotification('Для тестирования: откройте эту страницу в другом окне браузера и присоединитесь с ID: ' + this.roomId, 6000);
+                }, 1000);
+            }
+
+            async joinRoom() {
+                const userName = this.guestNameInput.value.trim();
+                const roomId = this.roomIdInput.value.trim().toUpperCase();
+
+                if (!userName) {
+                    this.showNotification('Введите ваше имя');
+                    return;
+                }
+
+                if (!roomId) {
+                    this.showNotification('Введите ID комнаты');
+                    return;
+                }
+
+                this.isHost = false;
+                this.roomId = roomId;
+                this.userName = userName;
+
+                this.showScreen('voice');
+                this.startCallTimer();
+                this.animateVoiceVisualizer();
+
+                // Имитируем подключение
+                setTimeout(() => {
+                    this.connectionStatus.textContent = 'Подключено (тестовый режим)';
+                    this.showNotification('Вы в голосовом чате! Для реального общения нужен WebRTC сервер');
+                }, 2000);
+
+                this.addParticipant(this.userName, false);
+            }
+
+            copyRoomId() {
+                navigator.clipboard.writeText(this.roomId).then(() => {
+                    this.showNotification('ID комнаты скопирован!');
+                });
+            }
+
+            startCallTimer() {
+                this.callTime = 0;
+                this.callInterval = setInterval(() => {
+                    this.callTime++;
+                    const minutes = Math.floor(this.callTime / 60).toString().padStart(2, '0');
+                    const seconds = (this.callTime % 60).toString().padStart(2, '0');
+                    this.callTimer.textContent = `${minutes}:${seconds}`;
+                }, 1000);
+            }
+
+            addParticipant(name, isLocal = true) {
+                const participantId = Date.now().toString();
+                this.participants.set(participantId, { name, isLocal });
+
+                const participantElement = document.createElement('div');
+                participantElement.className = 'participant';
+                participantElement.innerHTML = `
+                    <div class="participant-avatar">👤</div>
+                    <div>${name} ${isLocal ? '(Вы)' : ''}</div>
+                `;
+
+                this.participantsList.appendChild(participantElement);
+            }
+
+            leaveRoom() {
+                if (this.callInterval) {
+                    clearInterval(this.callInterval);
+                }
+
+                if (this.localStream) {
+                    this.localStream.getTracks().forEach(track => track.stop());
+                }
+
+                this.showScreen('main');
+                this.showNotification('Вы вышли из комнаты');
+
+                // Очистка
+                this.participants.clear();
+                this.participantsList.innerHTML = '';
+                this.roomId = null;
+                this.userName = null;
+            }
+
+            toggleMicrophone() {
+                this.isMicMuted = !this.isMicMuted;
+                if (this.isMicMuted) {
+                    this.micToggleBtn.classList.add('muted');
+                    this.micToggleBtn.innerHTML = '<i>🔇</i>';
+                    this.showNotification('Микрофон отключен');
+                } else {
+                    this.micToggleBtn.classList.remove('muted');
+                    this.micToggleBtn.innerHTML = '<i>🎤</i>';
+                    this.showNotification('Микрофон включен');
+                }
+            }
+
+            animateVoiceVisualizer() {
+                const bars = document.querySelectorAll('.voice-bar');
+                
+                const updateBars = () => {
+                    bars.forEach(bar => {
+                        const height = Math.floor(Math.random() * 40) + 10;
+                        bar.style.height = `${height}px`;
+                        
+                        const opacity = Math.random() * 0.5 + 0.5;
+                        bar.style.background = `rgba(255, 255, 255, ${opacity})`;
+                    });
+                    
+                    if (this.screens.voice.style.display === 'block') {
+                        setTimeout(updateBars, 200);
+                    }
+                };
+                
+                updateBars();
+            }
+        }
+
+        // Инициализация приложения
+        document.addEventListener('DOMContentLoaded', () => {
+            new VoiceChat();
+        });
+    </script>
+</body>
+</html>
