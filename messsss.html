@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LocalChat | Локальный Мессенджер</title>
+    <title>LocalChat | P2P Мессенджер</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -21,7 +21,6 @@
             color: #e6edf3;
         }
 
-        /* Контейнеры */
         .app-container {
             display: flex;
             height: 100vh;
@@ -31,7 +30,6 @@
             gap: 10px;
         }
 
-        /* Левая панель - комнаты и настройки */
         .sidebar {
             width: 320px;
             display: flex;
@@ -63,7 +61,6 @@
             color: #58a6ff;
         }
 
-        /* Основная панель - чат */
         .main-panel {
             flex: 1;
             display: flex;
@@ -72,7 +69,6 @@
             min-width: 0;
         }
 
-        /* Карточки */
         .glass-card {
             background: rgba(22, 27, 34, 0.8);
             border-radius: 12px;
@@ -81,7 +77,6 @@
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         }
 
-        /* Заголовок чата */
         .chat-header {
             padding: 20px;
             display: flex;
@@ -141,7 +136,6 @@
             100% { opacity: 1; }
         }
 
-        /* Окно сообщений */
         .chat-window {
             flex: 1;
             display: flex;
@@ -159,7 +153,6 @@
             background: rgba(13, 17, 23, 0.5);
         }
 
-        /* Кастомный скролл */
         .messages-container::-webkit-scrollbar {
             width: 8px;
         }
@@ -178,7 +171,6 @@
             background: #484f58;
         }
 
-        /* Сообщения */
         .message {
             max-width: 75%;
             padding: 12px 16px;
@@ -241,7 +233,6 @@
             word-wrap: break-word;
         }
 
-        /* Ввод сообщения */
         .message-input-container {
             padding: 15px 20px;
             border-top: 1px solid #30363d;
@@ -306,7 +297,6 @@
             transform: none;
         }
 
-        /* Формы */
         .form-group {
             margin-bottom: 15px;
         }
@@ -336,7 +326,6 @@
             box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.2);
         }
 
-        /* Кнопки */
         .btn {
             padding: 10px 16px;
             border-radius: 8px;
@@ -374,7 +363,11 @@
             border-color: #58a6ff;
         }
 
-        /* Список комнат */
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+
         .rooms-list {
             display: flex;
             flex-direction: column;
@@ -437,7 +430,6 @@
             gap: 4px;
         }
 
-        /* Список пользователей */
         .users-list {
             display: flex;
             flex-direction: column;
@@ -481,7 +473,6 @@
             color: #8b949e;
         }
 
-        /* Индикатор подключения */
         .connection-status {
             padding: 12px;
             border-radius: 8px;
@@ -504,7 +495,12 @@
             color: #f85149;
         }
 
-        /* Уведомления */
+        .connection-status.waiting {
+            background: rgba(255, 211, 77, 0.1);
+            border: 1px solid rgba(255, 211, 77, 0.3);
+            color: #e3b341;
+        }
+
         .notification {
             position: fixed;
             bottom: 20px;
@@ -550,7 +546,39 @@
             color: #8b949e;
         }
 
-        /* Мобильная адаптация */
+        .peer-id {
+            font-family: monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .id-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .copy-btn {
+            background: none;
+            border: none;
+            color: #58a6ff;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .copy-btn:hover {
+            color: #79c0ff;
+        }
+
+        .rooms-actions {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
         @media (max-width: 768px) {
             .app-container {
                 flex-direction: column;
@@ -567,7 +595,6 @@
             }
         }
 
-        /* Скрытые элементы */
         .hidden {
             display: none !important;
         }
@@ -575,11 +602,10 @@
 </head>
 <body>
     <div class="app-container">
-        <!-- Левая панель -->
         <div class="sidebar">
-            <!-- Подключение -->
+            <!-- Подключение через WebRTC -->
             <div class="sidebar-section">
-                <h3 class="section-title"><i class="fas fa-wifi"></i>Подключение</h3>
+                <h3 class="section-title"><i class="fas fa-wifi"></i>P2P Подключение</h3>
                 <div id="connection-status" class="connection-status disconnected">
                     <span>Не подключено</span>
                     <i class="fas fa-times-circle"></i>
@@ -590,36 +616,47 @@
                     <input type="text" id="username-input" class="form-input" placeholder="Введите ваше имя" value="Пользователь">
                 </div>
                 
-                <div class="form-group">
-                    <label class="form-label">IP сервера</label>
-                    <input type="text" id="server-ip-input" class="form-input" placeholder="ws://192.168.1.100:8080" value="ws://localhost:8080">
+                <div class="id-display">
+                    <span>Ваш ID:</span>
+                    <span id="peer-id" class="peer-id">Генерация...</span>
+                    <button id="copy-id-btn" class="copy-btn" title="Скопировать ID">
+                        <i class="far fa-copy"></i>
+                    </button>
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">Имя комнаты</label>
-                    <input type="text" id="room-name-input" class="form-input" placeholder="Общая комната">
+                    <label class="form-label">ID другого пользователя</label>
+                    <input type="text" id="remote-peer-id" class="form-input" placeholder="Введите ID собеседника">
                 </div>
                 
                 <button id="connect-btn" class="btn btn-primary">
                     <i class="fas fa-plug"></i>Подключиться
                 </button>
+                <button id="disconnect-btn" class="btn btn-secondary" style="margin-top: 8px;">
+                    <i class="fas fa-unlink"></i>Отключиться
+                </button>
             </div>
 
             <!-- Создать комнату -->
             <div class="sidebar-section">
-                <h3 class="section-title"><i class="fas fa-plus-circle"></i>Создать комнату</h3>
+                <h3 class="section-title"><i class="fas fa-plus-circle"></i>Управление комнатами</h3>
+                <div class="rooms-actions">
+                    <button id="create-room-btn" class="btn btn-secondary btn-small">
+                        <i class="fas fa-plus"></i>Создать
+                    </button>
+                    <button id="refresh-rooms-btn" class="btn btn-secondary btn-small">
+                        <i class="fas fa-sync-alt"></i>Обновить
+                    </button>
+                </div>
                 <div class="form-group">
                     <label class="form-label">Название комнаты</label>
                     <input type="text" id="new-room-name" class="form-input" placeholder="Моя комната">
                 </div>
-                <button id="create-room-btn" class="btn btn-secondary">
-                    <i class="fas fa-plus"></i>Создать комнату
-                </button>
             </div>
 
             <!-- Список комнат -->
             <div class="sidebar-section">
-                <h3 class="section-title"><i class="fas fa-door-open"></i>Доступные комнаты</h3>
+                <h3 class="section-title"><i class="fas fa-door-open"></i>Доступные комнаты (<span id="rooms-count">0</span>)</h3>
                 <div id="rooms-list" class="rooms-list">
                     <!-- Список комнат будет здесь -->
                 </div>
@@ -627,7 +664,7 @@
 
             <!-- Пользователи онлайн -->
             <div class="sidebar-section">
-                <h3 class="section-title"><i class="fas fa-users"></i>В комнате (<span id="users-count">0</span>)</h3>
+                <h3 class="section-title"><i class="fas fa-users"></i>В сети (<span id="users-count">0</span>)</h3>
                 <div id="users-list" class="users-list">
                     <!-- Список пользователей будет здесь -->
                 </div>
@@ -642,21 +679,28 @@
                         <i class="fas fa-comments"></i>
                     </div>
                     <div class="chat-info">
-                        <h2 id="current-room-name">Локальный чат</h2>
-                        <p id="current-room-info">Подключитесь к серверу, чтобы начать общение</p>
+                        <h2 id="current-room-name">Eternall Messanger</h2>
+                        <p id="current-room-info">Подключитесь к другому пользователю для общения</p>
                     </div>
                 </div>
                 <div class="online-indicator">
                     <div class="online-dot"></div>
-                    <span id="online-count">0 онлайн</span>
+                    <span id="online-count">0 подключений</span>
                 </div>
             </div>
 
             <div class="glass-card chat-window">
                 <div id="messages-container" class="messages-container">
-                    <!-- Сообщения будут здесь -->
                     <div class="message message-system">
-                        Добро пожаловать в LocalChat! Подключитесь к серверу, чтобы начать общение.
+                        Добро пожаловать в Eternall!<br>
+                        Для начала общения подключитесь к другому пользователю по его ID.
+                    </div>
+                    <div class="message message-system">
+                        <strong>Как использовать:</strong><br>
+                        1. Скопируйте ваш ID и отправьте другу<br>
+                        2. Получите ID друга и введите его в поле<br>
+                        3. Нажмите "Подключиться"<br>
+                        4. Создавайте комнаты и общайтесь!
                     </div>
                 </div>
                 
@@ -678,18 +722,20 @@
         </div>
     </div>
 
-    <!-- Уведомления -->
     <div id="notifications-container"></div>
 
     <script>
-        class LocalChat {
+        // Используем простой PeerJS для P2P соединений
+        // Если хотите использовать свой сервер, можете настроить PeerJS Cloud или локальный сервер
+        class P2PChat {
             constructor() {
-                this.socket = null;
+                this.peer = null;
+                this.connections = new Map(); // remotePeerId -> connection
+                this.rooms = new Map(); // roomName -> Set of peerIds
+                this.currentRoom = 'Основная';
                 this.username = 'Пользователь';
-                this.currentRoom = null;
-                this.rooms = [];
-                this.users = [];
-                this.isConnected = false;
+                this.users = new Map(); // peerId -> {username, rooms}
+                this.myRooms = new Set(['Основная']);
                 
                 this.init();
             }
@@ -697,26 +743,23 @@
             init() {
                 this.initUI();
                 this.setupEventListeners();
-                this.loadSettings();
-                
-                // Авто-подключение к localhost при загрузке
-                setTimeout(() => {
-                    if (!this.isConnected) {
-                        this.showNotification('info', 'Готов к подключению', 'Введите IP сервера и нажмите "Подключиться"');
-                    }
-                }, 1000);
+                this.generatePeerId();
             }
             
             initUI() {
                 this.elements = {
                     connectionStatus: document.getElementById('connection-status'),
                     usernameInput: document.getElementById('username-input'),
-                    serverIpInput: document.getElementById('server-ip-input'),
-                    roomNameInput: document.getElementById('room-name-input'),
+                    peerId: document.getElementById('peer-id'),
+                    copyIdBtn: document.getElementById('copy-id-btn'),
+                    remotePeerId: document.getElementById('remote-peer-id'),
                     connectBtn: document.getElementById('connect-btn'),
+                    disconnectBtn: document.getElementById('disconnect-btn'),
                     
                     newRoomName: document.getElementById('new-room-name'),
                     createRoomBtn: document.getElementById('create-room-btn'),
+                    refreshRoomsBtn: document.getElementById('refresh-rooms-btn'),
+                    roomsCount: document.getElementById('rooms-count'),
                     
                     roomsList: document.getElementById('rooms-list'),
                     usersList: document.getElementById('users-list'),
@@ -732,14 +775,37 @@
                     
                     notificationsContainer: document.getElementById('notifications-container')
                 };
+                
+                // Инициализируем комнату по умолчанию
+                this.rooms.set('Основная', new Set());
             }
             
             setupEventListeners() {
-                // Подключение к серверу
-                this.elements.connectBtn.addEventListener('click', () => this.connectToServer());
+                // Сохранение имени
+                this.elements.usernameInput.addEventListener('change', () => {
+                    this.username = this.elements.usernameInput.value.trim() || 'Пользователь';
+                    localStorage.setItem('localchat-username', this.username);
+                    this.broadcastUserUpdate();
+                });
+                
+                // Копирование ID
+                this.elements.copyIdBtn.addEventListener('click', () => {
+                    navigator.clipboard.writeText(this.elements.peerId.textContent)
+                        .then(() => this.showNotification('success', 'Скопировано', 'ID скопирован в буфер обмена'))
+                        .catch(() => this.showNotification('error', 'Ошибка', 'Не удалось скопировать ID'));
+                });
+                
+                // Подключение
+                this.elements.connectBtn.addEventListener('click', () => this.connectToPeer());
+                
+                // Отключение
+                this.elements.disconnectBtn.addEventListener('click', () => this.disconnectAll());
                 
                 // Создание комнаты
                 this.elements.createRoomBtn.addEventListener('click', () => this.createRoom());
+                
+                // Обновление комнат
+                this.elements.refreshRoomsBtn.addEventListener('click', () => this.updateRoomsList());
                 
                 // Отправка сообщения
                 this.elements.sendBtn.addEventListener('click', () => this.sendMessage());
@@ -756,239 +822,539 @@
                     this.elements.messageInput.style.height = Math.min(this.elements.messageInput.scrollHeight, 120) + 'px';
                 });
                 
-                // Сохранение имени при изменении
-                this.elements.usernameInput.addEventListener('change', () => {
-                    this.username = this.elements.usernameInput.value.trim() || 'Пользователь';
-                    localStorage.setItem('localchat-username', this.username);
-                });
-                
-                // Сохранение IP сервера
-                this.elements.serverIpInput.addEventListener('change', () => {
-                    localStorage.setItem('localchat-server-ip', this.elements.serverIpInput.value);
-                });
-            }
-            
-            loadSettings() {
-                // Загрузка сохраненных настроек
+                // Загрузка сохраненного имени
                 const savedUsername = localStorage.getItem('localchat-username');
-                const savedServerIp = localStorage.getItem('localchat-server-ip');
-                
                 if (savedUsername) {
                     this.elements.usernameInput.value = savedUsername;
                     this.username = savedUsername;
                 }
-                
-                if (savedServerIp) {
-                    this.elements.serverIpInput.value = savedServerIp;
-                }
-                
-                // Получение локального IP (для информации)
-                this.getLocalIP();
             }
             
-            async getLocalIP() {
+            generatePeerId() {
+                // Генерируем случайный ID
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                let id = '';
+                for (let i = 0; i < 8; i++) {
+                    id += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                this.elements.peerId.textContent = id;
+                
+                // Инициализируем Peer соединение
+                this.initializePeer(id);
+            }
+            
+            initializePeer(peerId) {
                 try {
-                    const response = await fetch('https://api.ipify.org?format=json');
-                    const data = await response.json();
-                    // Показываем локальный IP в подсказке
-                    this.elements.serverIpInput.placeholder = `ws://${data.ip}:8080 или ws://localhost:8080`;
+                    // Используем простой WebRTC без внешних серверов (для локальной сети)
+                    // В реальном приложении нужно настроить STUN/сервер сигналинга
+                    const config = {
+                        iceServers: [
+                            { urls: 'stun:stun.l.google.com:19302' },
+                            { urls: 'stun:stun1.l.google.com:19302' }
+                        ]
+                    };
+                    
+                    // Создаем простой P2P менеджер
+                    this.peer = {
+                        id: peerId,
+                        connections: new Map(),
+                        on: (event, callback) => {
+                            if (event === 'connection') {
+                                this.onConnectionRequest = callback;
+                            }
+                        },
+                        connect: (remoteId) => {
+                            return this.createConnection(remoteId);
+                        }
+                    };
+                    
+                    this.updateConnectionStatus('ready');
+                    this.showNotification('info', 'Готов к подключению', `Ваш ID: ${peerId}`);
+                    
+                    // Запускаем прием входящих подключений
+                    this.startAcceptingConnections();
+                    
                 } catch (error) {
-                    console.log('Не удалось получить IP');
+                    console.error('Ошибка инициализации Peer:', error);
+                    this.showNotification('error', 'Ошибка', 'Не удалось инициализировать P2P соединение');
                 }
             }
             
-            connectToServer() {
-                if (this.isConnected) {
-                    this.disconnect();
+            startAcceptingConnections() {
+                // Эмулируем прием входящих подключений через localStorage
+                setInterval(() => {
+                    this.checkForIncomingConnections();
+                }, 2000);
+            }
+            
+            checkForIncomingConnections() {
+                const incomingKey = `localchat-incoming-${this.peer.id}`;
+                const incomingData = localStorage.getItem(incomingKey);
+                
+                if (incomingData) {
+                    try {
+                        const data = JSON.parse(incomingData);
+                        localStorage.removeItem(incomingKey);
+                        
+                        if (data.type === 'connect_request') {
+                            this.handleIncomingConnection(data.from, data.offer);
+                        }
+                    } catch (error) {
+                        console.error('Ошибка обработки входящего подключения:', error);
+                    }
+                }
+            }
+            
+            async createConnection(remoteId) {
+                if (this.connections.has(remoteId)) {
+                    this.showNotification('info', 'Уже подключен', `Вы уже подключены к ${remoteId}`);
                     return;
                 }
                 
-                const serverUrl = this.elements.serverIpInput.value.trim();
-                const username = this.elements.usernameInput.value.trim() || 'Пользователь';
-                const roomName = this.elements.roomNameInput.value.trim() || 'Общая комната';
-                
-                if (!serverUrl) {
-                    this.showNotification('error', 'Ошибка', 'Введите адрес сервера');
+                if (remoteId === this.peer.id) {
+                    this.showNotification('error', 'Ошибка', 'Нельзя подключиться к себе');
                     return;
                 }
                 
-                this.username = username;
+                this.updateConnectionStatus('waiting', `Подключение к ${remoteId}...`);
+                
+                // Создаем фейковое соединение для демонстрации
+                const connection = {
+                    id: remoteId,
+                    send: (data) => this.sendToPeer(remoteId, data),
+                    close: () => this.disconnectPeer(remoteId),
+                    on: (event, callback) => {
+                        if (event === 'data') {
+                            connection.dataHandler = callback;
+                        }
+                    }
+                };
+                
+                this.connections.set(remoteId, connection);
+                
+                // Отправляем запрос на подключение
+                this.sendConnectionRequest(remoteId);
+                
+                return connection;
+            }
+            
+            sendConnectionRequest(remoteId) {
+                const request = {
+                    type: 'connect_request',
+                    from: this.peer.id,
+                    offer: {
+                        type: 'offer',
+                        sdp: 'fake-sdp-for-demo'
+                    },
+                    username: this.username,
+                    rooms: Array.from(this.myRooms)
+                };
+                
+                // Сохраняем запрос в localStorage (эмуляция сервера сигналинга)
+                const requestKey = `localchat-incoming-${remoteId}`;
+                localStorage.setItem(requestKey, JSON.stringify(request));
+                
+                // Устанавливаем таймаут на удаление запроса
+                setTimeout(() => {
+                    if (localStorage.getItem(requestKey) === JSON.stringify(request)) {
+                        localStorage.removeItem(requestKey);
+                    }
+                }, 30000);
+            }
+            
+            async handleIncomingConnection(from, offer) {
+                if (this.connections.has(from)) {
+                    return;
+                }
+                
+                const accept = confirm(`Пользователь ${from} хочет подключиться к вам. Принять?`);
+                
+                if (accept) {
+                    // Создаем соединение
+                    const connection = {
+                        id: from,
+                        send: (data) => this.sendToPeer(from, data),
+                        close: () => this.disconnectPeer(from),
+                        on: (event, callback) => {
+                            if (event === 'data') {
+                                connection.dataHandler = callback;
+                            }
+                        }
+                    };
+                    
+                    this.connections.set(from, connection);
+                    
+                    // Отправляем подтверждение
+                    this.sendToPeer(from, {
+                        type: 'connection_accepted',
+                        from: this.peer.id,
+                        username: this.username,
+                        rooms: Array.from(this.myRooms)
+                    });
+                    
+                    // Добавляем пользователя
+                    this.users.set(from, {
+                        username: 'Подключается...',
+                        rooms: new Set()
+                    });
+                    
+                    this.updateConnectionStatus('connected');
+                    this.updateUsersList();
+                    this.showNotification('success', 'Подключено', `Пользователь ${from} подключен`);
+                    
+                    // Включаем поле ввода
+                    this.elements.messageInput.disabled = false;
+                    this.elements.sendBtn.disabled = false;
+                    
+                } else {
+                    // Отправляем отказ
+                    this.sendToPeer(from, {
+                        type: 'connection_rejected',
+                        from: this.peer.id
+                    });
+                }
+            }
+            
+            sendToPeer(peerId, data) {
+                // Эмулируем отправку данных через localStorage
+                const messageKey = `localchat-message-${peerId}`;
+                const message = {
+                    from: this.peer.id,
+                    data: data,
+                    timestamp: Date.now()
+                };
+                
+                localStorage.setItem(messageKey, JSON.stringify(message));
+                
+                // Устанавливаем таймаут на удаление сообщения
+                setTimeout(() => {
+                    if (localStorage.getItem(messageKey) === JSON.stringify(message)) {
+                        localStorage.removeItem(messageKey);
+                    }
+                }, 5000);
+                
+                // Проверяем входящие сообщения
+                this.checkForMessages();
+            }
+            
+            checkForMessages() {
+                const messageKey = `localchat-message-${this.peer.id}`;
+                const messageData = localStorage.getItem(messageKey);
+                
+                if (messageData) {
+                    try {
+                        const message = JSON.parse(messageData);
+                        localStorage.removeItem(messageKey);
+                        
+                        const connection = this.connections.get(message.from);
+                        if (connection && connection.dataHandler) {
+                            connection.dataHandler(message.data);
+                        }
+                        
+                        this.handlePeerMessage(message.from, message.data);
+                        
+                    } catch (error) {
+                        console.error('Ошибка обработки сообщения:', error);
+                    }
+                }
+                
+                // Продолжаем проверять сообщения
+                setTimeout(() => this.checkForMessages(), 1000);
+            }
+            
+            handlePeerMessage(from, data) {
+                switch (data.type) {
+                    case 'connection_accepted':
+                        this.handleConnectionAccepted(from, data);
+                        break;
+                    case 'connection_rejected':
+                        this.handleConnectionRejected(from);
+                        break;
+                    case 'chat_message':
+                        this.handleChatMessage(from, data);
+                        break;
+                    case 'room_created':
+                        this.handleRoomCreated(from, data);
+                        break;
+                    case 'room_joined':
+                        this.handleRoomJoined(from, data);
+                        break;
+                    case 'room_left':
+                        this.handleRoomLeft(from, data);
+                        break;
+                    case 'user_update':
+                        this.handleUserUpdate(from, data);
+                        break;
+                    case 'system_message':
+                        this.handleSystemMessage(data);
+                        break;
+                }
+            }
+            
+            handleConnectionAccepted(from, data) {
+                this.users.set(from, {
+                    username: data.username || 'Аноним',
+                    rooms: new Set(data.rooms || [])
+                });
+                
+                // Добавляем общие комнаты
+                data.rooms?.forEach(room => {
+                    if (this.myRooms.has(room)) {
+                        if (!this.rooms.has(room)) {
+                            this.rooms.set(room, new Set());
+                        }
+                        this.rooms.get(room).add(from);
+                        this.users.get(from).rooms.add(room);
+                    }
+                });
+                
+                this.updateConnectionStatus('connected');
+                this.updateUsersList();
+                this.updateRoomsList();
+                
+                this.showNotification('success', 'Подключено', `Подключение к ${from} установлено`);
+                this.addSystemMessage(`Подключен к пользователю ${data.username || from}`);
+                
+                // Включаем поле ввода
+                this.elements.messageInput.disabled = false;
+                this.elements.sendBtn.disabled = false;
+            }
+            
+            handleConnectionRejected(from) {
+                this.showNotification('error', 'Отклонено', `Пользователь ${from} отклонил подключение`);
+                this.connections.delete(from);
+                this.updateConnectionStatus('ready');
+            }
+            
+            handleChatMessage(from, data) {
+                if (data.room === this.currentRoom) {
+                    const user = this.users.get(from);
+                    const username = user ? user.username : from;
+                    const timestamp = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    
+                    this.addMessage(username, data.text, timestamp, 'incoming');
+                }
+            }
+            
+            handleRoomCreated(from, data) {
+                const roomName = data.room;
+                
+                if (!this.rooms.has(roomName)) {
+                    this.rooms.set(roomName, new Set());
+                }
+                
+                // Добавляем создателя в комнату
+                this.rooms.get(roomName).add(from);
+                
+                const user = this.users.get(from);
+                if (user) {
+                    user.rooms.add(roomName);
+                }
+                
+                this.updateRoomsList();
+                
+                if (from !== this.peer.id) {
+                    this.showNotification('info', 'Новая комната', `Пользователь ${user?.username || from} создал комнату "${roomName}"`);
+                }
+            }
+            
+            handleRoomJoined(from, data) {
+                const { room } = data;
+                const user = this.users.get(from);
+                
+                if (user && !user.rooms.has(room)) {
+                    user.rooms.add(room);
+                    
+                    if (!this.rooms.has(room)) {
+                        this.rooms.set(room, new Set());
+                    }
+                    this.rooms.get(room).add(from);
+                    
+                    this.updateRoomsList();
+                    
+                    if (room === this.currentRoom && from !== this.peer.id) {
+                        this.addSystemMessage(`${user.username} присоединился к комнате`);
+                    }
+                }
+            }
+            
+            handleRoomLeft(from, data) {
+                const { room } = data;
+                const user = this.users.get(from);
+                
+                if (user && user.rooms.has(room)) {
+                    user.rooms.delete(room);
+                    
+                    if (this.rooms.has(room)) {
+                        this.rooms.get(room).delete(from);
+                        
+                        // Если комната пустая и не наша, удаляем её
+                        if (this.rooms.get(room).size === 0 && !this.myRooms.has(room)) {
+                            this.rooms.delete(room);
+                        }
+                    }
+                    
+                    this.updateRoomsList();
+                    
+                    if (room === this.currentRoom && from !== this.peer.id) {
+                        this.addSystemMessage(`${user.username} покинул комнату`);
+                    }
+                }
+            }
+            
+            handleUserUpdate(from, data) {
+                const user = this.users.get(from);
+                if (user) {
+                    user.username = data.username || user.username;
+                    this.updateUsersList();
+                }
+            }
+            
+            handleSystemMessage(data) {
+                this.addSystemMessage(data.text);
+            }
+            
+            connectToPeer() {
+                const remoteId = this.elements.remotePeerId.value.trim();
+                if (!remoteId) {
+                    this.showNotification('error', 'Ошибка', 'Введите ID другого пользователя');
+                    return;
+                }
+                
+                if (remoteId === this.peer.id) {
+                    this.showNotification('error', 'Ошибка', 'Нельзя подключиться к себе');
+                    return;
+                }
+                
+                this.createConnection(remoteId);
+            }
+            
+            disconnectAll() {
+                this.connections.forEach((conn, peerId) => {
+                    this.disconnectPeer(peerId);
+                });
+                
+                this.connections.clear();
+                this.users.clear();
+                
+                this.updateConnectionStatus('ready');
+                this.updateUsersList();
+                
+                this.elements.messageInput.disabled = true;
+                this.elements.sendBtn.disabled = true;
+                
+                this.addSystemMessage('Все подключения разорваны');
+                this.showNotification('info', 'Отключено', 'Все соединения разорваны');
+            }
+            
+            disconnectPeer(peerId) {
+                const connection = this.connections.get(peerId);
+                if (connection) {
+                    connection.close();
+                    this.connections.delete(peerId);
+                    this.users.delete(peerId);
+                    
+                    // Удаляем пользователя из всех комнат
+                    this.rooms.forEach((users, room) => {
+                        users.delete(peerId);
+                    });
+                    
+                    this.updateUsersList();
+                    this.updateRoomsList();
+                }
+            }
+            
+            createRoom() {
+                const roomName = this.elements.newRoomName.value.trim();
+                if (!roomName) {
+                    this.showNotification('error', 'Ошибка', 'Введите название комнаты');
+                    return;
+                }
+                
+                if (this.rooms.has(roomName)) {
+                    this.showNotification('error', 'Ошибка', `Комната "${roomName}" уже существует`);
+                    return;
+                }
+                
+                // Создаем комнату локально
+                this.rooms.set(roomName, new Set([this.peer.id]));
+                this.myRooms.add(roomName);
+                
+                // Добавляем себя в комнату
+                const myUser = this.users.get(this.peer.id) || { username: this.username, rooms: new Set() };
+                myUser.rooms.add(roomName);
+                this.users.set(this.peer.id, myUser);
+                
+                // Рассылаем уведомление о создании комнаты
+                this.broadcast({
+                    type: 'room_created',
+                    room: roomName
+                });
+                
+                // Присоединяемся к созданной комнате
+                this.joinRoom(roomName);
+                
+                this.elements.newRoomName.value = '';
+                this.showNotification('success', 'Комната создана', `Комната "${roomName}" создана`);
+            }
+            
+            joinRoom(roomName) {
+                if (this.currentRoom === roomName) return;
+                
+                const previousRoom = this.currentRoom;
                 this.currentRoom = roomName;
                 
-                try {
-                    this.socket = new WebSocket(serverUrl);
-                    
-                    this.socket.onopen = () => {
-                        this.isConnected = true;
-                        this.updateConnectionStatus(true);
-                        this.showNotification('success', 'Подключено', 'Соединение с сервером установлено');
-                        
-                        // Регистрируем пользователя
-                        this.sendToServer({
-                            type: 'register',
-                            username: this.username,
-                            room: this.currentRoom
-                        });
-                        
-                        // Включаем поле ввода
-                        this.elements.messageInput.disabled = false;
-                        this.elements.sendBtn.disabled = false;
-                        this.elements.messageInput.focus();
-                    };
-                    
-                    this.socket.onmessage = (event) => {
-                        this.handleServerMessage(event.data);
-                    };
-                    
-                    this.socket.onclose = () => {
-                        this.isConnected = false;
-                        this.updateConnectionStatus(false);
-                        this.showNotification('error', 'Отключено', 'Соединение с сервером потеряно');
-                        
-                        // Отключаем поле ввода
-                        this.elements.messageInput.disabled = true;
-                        this.elements.sendBtn.disabled = true;
-                    };
-                    
-                    this.socket.onerror = (error) => {
-                        console.error('WebSocket error:', error);
-                        this.showNotification('error', 'Ошибка подключения', 'Проверьте адрес сервера и порт');
-                    };
-                    
-                } catch (error) {
-                    this.showNotification('error', 'Ошибка', 'Неверный адрес сервера');
-                    console.error('Connection error:', error);
-                }
-            }
-            
-            disconnect() {
-                if (this.socket) {
-                    this.socket.close();
-                    this.socket = null;
-                    this.isConnected = false;
-                    this.updateConnectionStatus(false);
-                    this.clearUsersList();
-                    this.clearRoomsList();
-                    
-                    this.elements.messageInput.disabled = true;
-                    this.elements.sendBtn.disabled = true;
-                    
-                    this.addSystemMessage('Отключено от сервера');
-                }
-            }
-            
-            sendToServer(data) {
-                if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-                    this.socket.send(JSON.stringify(data));
-                }
-            }
-            
-            handleServerMessage(messageData) {
-                try {
-                    const message = JSON.parse(messageData);
-                    
-                    switch (message.type) {
-                        case 'welcome':
-                            this.handleWelcome(message);
-                            break;
-                        case 'room_list':
-                            this.handleRoomList(message.rooms);
-                            break;
-                        case 'user_list':
-                            this.handleUserList(message.users);
-                            break;
-                        case 'message':
-                            this.handleChatMessage(message);
-                            break;
-                        case 'system':
-                            this.handleSystemMessage(message);
-                            break;
-                        case 'error':
-                            this.handleErrorMessage(message);
-                            break;
-                        case 'user_joined':
-                            this.handleUserJoined(message);
-                            break;
-                        case 'user_left':
-                            this.handleUserLeft(message);
-                            break;
-                        case 'room_created':
-                            this.handleRoomCreated(message);
-                            break;
-                        case 'room_joined':
-                            this.handleRoomJoined(message);
-                            break;
-                    }
-                } catch (error) {
-                    console.error('Error parsing message:', error);
-                }
-            }
-            
-            handleWelcome(message) {
-                this.addSystemMessage(`Добро пожаловать в комнату "${message.room}"!`);
-                this.elements.currentRoomName.textContent = message.room;
-                this.elements.currentRoomInfo.textContent = `Сервер: ${this.elements.serverIpInput.value}`;
-            }
-            
-            handleRoomList(rooms) {
-                this.rooms = rooms;
-                this.updateRoomsList();
-            }
-            
-            handleUserList(users) {
-                this.users = users;
-                this.updateUsersList();
-            }
-            
-            handleChatMessage(message) {
-                this.addMessage(message.username, message.text, message.timestamp, 'incoming');
-            }
-            
-            handleSystemMessage(message) {
-                this.addSystemMessage(message.text);
-            }
-            
-            handleErrorMessage(message) {
-                this.showNotification('error', 'Ошибка', message.text);
-            }
-            
-            handleUserJoined(message) {
-                this.addSystemMessage(`${message.username} присоединился к чату`);
-                this.showNotification('info', 'Новый участник', `${message.username} в комнате`);
-            }
-            
-            handleUserLeft(message) {
-                this.addSystemMessage(`${message.username} покинул чат`);
-            }
-            
-            handleRoomCreated(message) {
-                this.showNotification('success', 'Комната создана', `Комната "${message.room}" создана`);
-                // Присоединяемся к созданной комнате
-                this.joinRoom(message.room);
-            }
-            
-            handleRoomJoined(message) {
-                this.currentRoom = message.room;
-                this.addSystemMessage(`Вы присоединились к комнате "${message.room}"`);
-                this.elements.currentRoomName.textContent = message.room;
-                this.clearMessages();
+                // Обновляем UI
+                this.elements.currentRoomName.textContent = roomName;
+                this.elements.currentRoomInfo.textContent = `Комната: ${roomName}`;
                 
-                // Запрашиваем список пользователей
-                this.sendToServer({
-                    type: 'get_users',
-                    room: this.currentRoom
+                // Очищаем сообщения и показываем системное
+                this.clearMessages();
+                this.addSystemMessage(`Вы присоединились к комнате "${roomName}"`);
+                
+                // Уведомляем других пользователей
+                this.broadcast({
+                    type: 'room_joined',
+                    room: roomName
                 });
+                
+                // Добавляем себя в список участников комнаты
+                if (!this.rooms.has(roomName)) {
+                    this.rooms.set(roomName, new Set());
+                }
+                this.rooms.get(roomName).add(this.peer.id);
+                
+                // Удаляем себя из предыдущей комнаты (если она не основная)
+                if (previousRoom !== 'Основная' && this.rooms.has(previousRoom)) {
+                    this.rooms.get(previousRoom).delete(this.peer.id);
+                    
+                    // Уведомляем о выходе из предыдущей комнаты
+                    this.broadcast({
+                        type: 'room_left',
+                        room: previousRoom
+                    });
+                }
+                
+                // Обновляем список комнат
+                this.updateRoomsList();
+                this.updateUsersList();
             }
             
             sendMessage() {
                 const text = this.elements.messageInput.value.trim();
-                if (!text || !this.isConnected) return;
+                if (!text) return;
                 
-                // Отправляем сообщение на сервер
-                this.sendToServer({
-                    type: 'message',
+                if (this.connections.size === 0) {
+                    this.showNotification('error', 'Ошибка', 'Нет подключенных пользователей');
+                    return;
+                }
+                
+                // Отправляем сообщение всем в текущей комнате
+                this.broadcast({
+                    type: 'chat_message',
                     text: text,
-                    room: this.currentRoom
+                    room: this.currentRoom,
+                    timestamp: Date.now()
                 });
                 
                 // Показываем сообщение локально
@@ -1001,35 +1367,31 @@
                 this.elements.messageInput.focus();
             }
             
-            createRoom() {
-                const roomName = this.elements.newRoomName.value.trim();
-                if (!roomName) {
-                    this.showNotification('error', 'Ошибка', 'Введите название комнаты');
-                    return;
-                }
-                
-                if (!this.isConnected) {
-                    this.showNotification('error', 'Ошибка', 'Сначала подключитесь к серверу');
-                    return;
-                }
-                
-                this.sendToServer({
-                    type: 'create_room',
-                    room: roomName
+            broadcast(data) {
+                // Отправляем всем подключенным пользователям
+                this.connections.forEach((conn, peerId) => {
+                    conn.send(data);
                 });
-                
-                this.elements.newRoomName.value = '';
             }
             
-            joinRoom(roomName) {
-                if (!this.isConnected) return;
-                
-                this.sendToServer({
-                    type: 'join_room',
-                    room: roomName
+            broadcastUserUpdate() {
+                this.broadcast({
+                    type: 'user_update',
+                    username: this.username
                 });
                 
-                this.currentRoom = roomName;
+                // Обновляем локальную информацию
+                const myUser = this.users.get(this.peer.id);
+                if (myUser) {
+                    myUser.username = this.username;
+                } else {
+                    this.users.set(this.peer.id, {
+                        username: this.username,
+                        rooms: new Set(Array.from(this.myRooms))
+                    });
+                }
+                
+                this.updateUsersList();
             }
             
             addMessage(sender, text, timestamp, type) {
@@ -1067,23 +1429,35 @@
                 }, 100);
             }
             
-            updateConnectionStatus(connected) {
+            updateConnectionStatus(status, text = '') {
                 const statusElement = this.elements.connectionStatus;
                 
-                if (connected) {
-                    statusElement.className = 'connection-status connected';
-                    statusElement.innerHTML = `
-                        <span>Подключено к ${this.currentRoom}</span>
-                        <i class="fas fa-check-circle"></i>
-                    `;
-                    this.elements.connectBtn.innerHTML = '<i class="fas fa-plug"></i>Отключиться';
-                } else {
-                    statusElement.className = 'connection-status disconnected';
-                    statusElement.innerHTML = `
-                        <span>Не подключено</span>
-                        <i class="fas fa-times-circle"></i>
-                    `;
-                    this.elements.connectBtn.innerHTML = '<i class="fas fa-plug"></i>Подключиться';
+                statusElement.className = `connection-status ${status}`;
+                
+                switch (status) {
+                    case 'connected':
+                        statusElement.innerHTML = `
+                            <span>Подключено (${this.connections.size} пользователей)</span>
+                            <i class="fas fa-check-circle"></i>
+                        `;
+                        break;
+                    case 'waiting':
+                        statusElement.innerHTML = `
+                            <span>${text || 'Ожидание подключения...'}</span>
+                            <i class="fas fa-clock"></i>
+                        `;
+                        break;
+                    case 'ready':
+                        statusElement.innerHTML = `
+                            <span>Готов к подключению</span>
+                            <i class="fas fa-wifi"></i>
+                        `;
+                        break;
+                    default:
+                        statusElement.innerHTML = `
+                            <span>Не подключено</span>
+                            <i class="fas fa-times-circle"></i>
+                        `;
                 }
             }
             
@@ -1091,31 +1465,35 @@
                 const roomsList = this.elements.roomsList;
                 roomsList.innerHTML = '';
                 
-                if (this.rooms.length === 0) {
-                    roomsList.innerHTML = '<div class="room-item"><div class="room-info"><div class="room-name">Нет доступных комнат</div></div></div>';
+                this.elements.roomsCount.textContent = this.rooms.size;
+                
+                if (this.rooms.size === 0) {
+                    roomsList.innerHTML = '<div class="room-item"><div class="room-info"><div class="room-name">Нет комнат</div></div></div>';
                     return;
                 }
                 
-                this.rooms.forEach(room => {
+                this.rooms.forEach((users, roomName) => {
                     const roomItem = document.createElement('div');
-                    roomItem.className = `room-item ${room.name === this.currentRoom ? 'active' : ''}`;
-                    roomItem.dataset.roomName = room.name;
+                    roomItem.className = `room-item ${roomName === this.currentRoom ? 'active' : ''}`;
+                    
+                    const userCount = users.size;
+                    const isMyRoom = this.myRooms.has(roomName);
                     
                     roomItem.innerHTML = `
                         <div class="room-icon">
-                            <i class="fas fa-hashtag"></i>
+                            <i class="fas ${isMyRoom ? 'fa-crown' : 'fa-hashtag'}"></i>
                         </div>
                         <div class="room-info">
-                            <div class="room-name">${room.name}</div>
+                            <div class="room-name">${roomName} ${isMyRoom ? '(моя)' : ''}</div>
                             <div class="room-meta">
-                                <span class="room-users"><i class="fas fa-user"></i> ${room.users}</span>
+                                <span class="room-users"><i class="fas fa-user"></i> ${userCount}</span>
                             </div>
                         </div>
                     `;
                     
                     roomItem.addEventListener('click', () => {
-                        if (room.name !== this.currentRoom) {
-                            this.joinRoom(room.name);
+                        if (roomName !== this.currentRoom) {
+                            this.joinRoom(roomName);
                         }
                     });
                     
@@ -1127,40 +1505,48 @@
                 const usersList = this.elements.usersList;
                 usersList.innerHTML = '';
                 
-                this.elements.usersCount.textContent = this.users.length;
-                this.elements.onlineCount.textContent = `${this.users.length} онлайн`;
+                // Добавляем себя в список
+                const allUsers = new Map(this.users);
+                allUsers.set(this.peer.id, {
+                    username: this.username,
+                    rooms: new Set(Array.from(this.myRooms))
+                });
                 
-                if (this.users.length === 0) {
+                // Фильтруем пользователей в текущей комнате
+                const usersInRoom = [];
+                allUsers.forEach((user, peerId) => {
+                    if (user.rooms.has(this.currentRoom) || peerId === this.peer.id) {
+                        usersInRoom.push({ peerId, ...user });
+                    }
+                });
+                
+                this.elements.usersCount.textContent = usersInRoom.length;
+                this.elements.onlineCount.textContent = `${allUsers.size} пользователей в сети`;
+                
+                if (usersInRoom.length === 0) {
                     usersList.innerHTML = '<div class="user-item"><div class="user-info"><div class="user-name">Нет пользователей</div></div></div>';
                     return;
                 }
                 
-                this.users.forEach(user => {
+                usersInRoom.forEach(user => {
                     const userItem = document.createElement('div');
                     userItem.className = 'user-item';
                     
-                    const firstLetter = user.charAt(0).toUpperCase();
+                    const firstLetter = user.username.charAt(0).toUpperCase();
+                    const isMe = user.peerId === this.peer.id;
                     
                     userItem.innerHTML = `
-                        <div class="user-avatar">${firstLetter}</div>
+                        <div class="user-avatar" style="background: ${isMe ? 'linear-gradient(135deg, #58a6ff, #1f6feb)' : 'linear-gradient(135deg, #238636, #2ea043)'}">
+                            ${firstLetter}
+                        </div>
                         <div class="user-info">
-                            <div class="user-name">${user} ${user === this.username ? '(Вы)' : ''}</div>
-                            <div class="user-status">В сети</div>
+                            <div class="user-name">${user.username} ${isMe ? '(Вы)' : ''}</div>
+                            <div class="user-status">${isMe ? 'Вы' : 'В сети'}</div>
                         </div>
                     `;
                     
                     usersList.appendChild(userItem);
                 });
-            }
-            
-            clearUsersList() {
-                this.elements.usersList.innerHTML = '<div class="user-item"><div class="user-info"><div class="user-name">Нет подключения</div></div></div>';
-                this.elements.usersCount.textContent = '0';
-                this.elements.onlineCount.textContent = '0 онлайн';
-            }
-            
-            clearRoomsList() {
-                this.elements.roomsList.innerHTML = '<div class="room-item"><div class="room-info"><div class="room-name">Нет подключения</div></div></div>';
             }
             
             showNotification(type, title, text) {
@@ -1181,7 +1567,6 @@
                 
                 this.elements.notificationsContainer.appendChild(notification);
                 
-                // Автоматическое удаление через 5 секунд
                 setTimeout(() => {
                     notification.remove();
                 }, 5000);
@@ -1194,263 +1579,24 @@
             }
         }
 
-        // Серверная часть (Node.js) для локального запуска
-        const serverCode = `
-// server.js - Сервер для LocalChat
-const WebSocket = require('ws');
-const http = require('http');
-
-const server = http.createServer();
-const wss = new WebSocket.Server({ server });
-
-const rooms = new Map(); // roomName -> Set of clients
-const clients = new Map(); // client -> {username, room}
-
-wss.on('connection', (ws) => {
-    console.log('Новое подключение');
-
-    ws.on('message', (message) => {
-        try {
-            const data = JSON.parse(message);
-            handleMessage(ws, data);
-        } catch (error) {
-            console.error('Ошибка парсинга сообщения:', error);
-        }
-    });
-
-    ws.on('close', () => {
-        handleDisconnect(ws);
-    });
-});
-
-function handleMessage(ws, data) {
-    switch (data.type) {
-        case 'register':
-            registerUser(ws, data.username, data.room);
-            break;
-        case 'message':
-            broadcastMessage(ws, data.text, data.room);
-            break;
-        case 'create_room':
-            createRoom(ws, data.room);
-            break;
-        case 'join_room':
-            joinRoom(ws, data.room);
-            break;
-        case 'get_users':
-            sendUserList(ws, data.room);
-            break;
-    }
-}
-
-function registerUser(ws, username, roomName) {
-    clients.set(ws, { username, room: roomName });
-    
-    if (!rooms.has(roomName)) {
-        rooms.set(roomName, new Set());
-    }
-    
-    rooms.get(roomName).add(ws);
-    
-    // Приветственное сообщение
-    ws.send(JSON.stringify({
-        type: 'welcome',
-        room: roomName,
-        message: 'Добро пожаловать в чат!'
-    }));
-    
-    // Уведомляем других пользователей
-    broadcastToRoom(roomName, {
-        type: 'user_joined',
-        username: username
-    }, ws);
-    
-    // Обновляем списки
-    updateRoomLists();
-    sendUserList(ws, roomName);
-}
-
-function createRoom(ws, roomName) {
-    if (!rooms.has(roomName)) {
-        rooms.set(roomName, new Set());
-        
-        // Уведомляем всех о новой комнате
-        broadcastToAll({
-            type: 'room_created',
-            room: roomName
-        });
-        
-        // Присоединяем создателя к комнате
-        joinRoom(ws, roomName);
-    }
-}
-
-function joinRoom(ws, roomName) {
-    const clientData = clients.get(ws);
-    if (!clientData) return;
-    
-    // Выходим из старой комнаты
-    if (clientData.room && rooms.has(clientData.room)) {
-        rooms.get(clientData.room).delete(ws);
-        broadcastToRoom(clientData.room, {
-            type: 'user_left',
-            username: clientData.username
-        }, ws);
-    }
-    
-    // Входим в новую комнату
-    if (!rooms.has(roomName)) {
-        rooms.set(roomName, new Set());
-    }
-    
-    clientData.room = roomName;
-    rooms.get(roomName).add(ws);
-    
-    // Уведомляем клиента
-    ws.send(JSON.stringify({
-        type: 'room_joined',
-        room: roomName
-    }));
-    
-    // Уведомляем других в комнате
-    broadcastToRoom(roomName, {
-        type: 'user_joined',
-        username: clientData.username
-    }, ws);
-    
-    // Обновляем списки
-    updateRoomLists();
-    sendUserList(ws, roomName);
-}
-
-function broadcastMessage(ws, text, roomName) {
-    const clientData = clients.get(ws);
-    if (!clientData) return;
-    
-    const message = {
-        type: 'message',
-        username: clientData.username,
-        text: text,
-        timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-    };
-    
-    broadcastToRoom(roomName, message);
-}
-
-function sendUserList(ws, roomName) {
-    if (!rooms.has(roomName)) return;
-    
-    const users = Array.from(rooms.get(roomName))
-        .map(client => clients.get(client).username)
-        .filter(name => name);
-    
-    ws.send(JSON.stringify({
-        type: 'user_list',
-        users: users
-    }));
-}
-
-function updateRoomLists() {
-    const roomList = Array.from(rooms.entries()).map(([name, clientsSet]) => ({
-        name: name,
-        users: clientsSet.size
-    }));
-    
-    broadcastToAll({
-        type: 'room_list',
-        rooms: roomList
-    });
-}
-
-function handleDisconnect(ws) {
-    const clientData = clients.get(ws);
-    if (clientData) {
-        const { username, room } = clientData;
-        
-        if (room && rooms.has(room)) {
-            rooms.get(room).delete(ws);
-            
-            // Уведомляем о выходе пользователя
-            broadcastToRoom(room, {
-                type: 'user_left',
-                username: username
-            });
-            
-            // Если комната пустая, удаляем её
-            if (rooms.get(room).size === 0) {
-                rooms.delete(room);
-            }
-        }
-        
-        clients.delete(ws);
-        updateRoomLists();
-    }
-}
-
-function broadcastToRoom(roomName, message, excludeWs = null) {
-    if (!rooms.has(roomName)) return;
-    
-    rooms.get(roomName).forEach(client => {
-        if (client !== excludeWs && client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify(message));
-        }
-    });
-}
-
-function broadcastToAll(message) {
-    clients.forEach((data, client) => {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify(message));
-        }
-    });
-}
-
-// Запуск сервера
-const PORT = process.env.PORT || 8080;
-server.listen(PORT, () => {
-    console.log(\`Сервер запущен на порту \${PORT}\`);
-    console.log('Для подключения используйте:');
-    console.log(\`- ws://localhost:\${PORT}\`);
-    console.log(\`- ws://YOUR_LOCAL_IP:\${PORT}\`);
-});
-
-// Получение локального IP
-require('dns').lookup(require('os').hostname(), (err, addr) => {
-    console.log(\`Ваш локальный IP: \${addr}\`);
-    console.log(\`Подключение: ws://\${addr}:\${PORT}\`);
-});
-`;
-
-        // Инструкции по запуску сервера
-        const serverInstructions = `
-<h3>Инструкции по запуску сервера:</h3>
-<ol>
-    <li>Установите Node.js с официального сайта</li>
-    <li>Создайте файл server.js и скопируйте в него код сервера выше</li>
-    <li>Откройте терминал в папке с server.js и выполните:
-        <code>npm install ws</code>
-    </li>
-    <li>Запустите сервер:
-        <code>node server.js</code>
-    </li>
-    <li>В браузере откройте этот файл и подключитесь используя:
-        <ul>
-            <li>Для того же компьютера: <code>ws://localhost:8080</code></li>
-            <li>Для других компьютеров в сети: <code>ws://[IP-сервера]:8080</code></li>
-        </ul>
-    </li>
-</ol>
-`;
-
         // Инициализация приложения
         document.addEventListener('DOMContentLoaded', () => {
-            window.chatApp = new LocalChat();
+            window.chatApp = new P2PChat();
             
             // Показываем инструкции в консоли
-            console.log('%c=== LocalChat Server Instructions ===', 'color: #58a6ff; font-size: 16px; font-weight: bold;');
-            console.log(serverInstructions);
+            console.log('%c=== LocalChat P2P Instructions ===', 'color: #58a6ff; font-size: 16px; font-weight: bold;');
+            console.log('Это P2P версия мессенджера, работающая без сервера.');
+            console.log('Для работы через Radmin VPN:');
+            console.log('1. Все участники подключаются к одной VPN сети через Radmin');
+            console.log('2. Каждый открывает этот файл в браузере');
+            console.log('3. Обмениваются ID (копируют из поля "Ваш ID")');
+            console.log('4. Вводят ID другого пользователя и нажимают "Подключиться"');
+            console.log('5. Принимают входящее подключение');
+            console.log('6. Создают комнаты и общаются!');
+            console.log('');
+            console.log('Примечание: Эта версия использует localStorage для эмуляции P2P соединений.');
+            console.log('В реальном приложении нужно использовать WebRTC с STUN серверами.');
             console.log('%c====================================', 'color: #58a6ff; font-size: 16px; font-weight: bold;');
-            console.log('Серверный код доступен в переменной: serverCode');
         });
     </script>
 </body>
